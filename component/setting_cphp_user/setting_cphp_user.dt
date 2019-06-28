@@ -1,0 +1,15 @@
+RUN groupadd cphp
+RUN useradd -m -g cphp -p "$1$hDIpGJlN$OqzLQ9sxi9rBDi4GH7kid1" -s /bin/bash cphp 
+ADD files/sudoer_cphp /etc/sudoers.d/cphp
+USER cphp
+RUN mkdir -p /home/cphp/var
+ADD files/scripts/git_ssh.sh /usr/bin/git_ssh.sh
+USER root
+ADD files/scripts/git-env.sh /etc/profile.d
+ADD files/scripts/ssh-agent.sh /etc/profile.d
+ADD files/scripts/continuousphp-env.sh /etc/profile.d
+USER cphp
+ADD files/authorized_keys /home/cphp/.ssh/authorized_keys
+USER root
+RUN mkdir -p /var/www
+RUN ln -s /home/cphp/var/www /var/www/html
