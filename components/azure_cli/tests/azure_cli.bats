@@ -1,4 +1,6 @@
 
 @test "azure - command line" {
-    [ "`su - cphp -c \"whereis azure\" | awk '{print $2}'`" = "/home/cphp/n/bin/azure" ]
+    az=$(su - cphp -c "whereis azure" 3>- &)
+    result=$(echo ${az} | awk '{print $2}')
+    [ ${result} = "/home/cphp/n/bin/azure" ]
 }

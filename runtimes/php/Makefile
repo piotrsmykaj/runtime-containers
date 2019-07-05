@@ -21,7 +21,7 @@ define php_task
 	docker build -f ./dockerfiles/$(1).d -t bats_test .
 	docker run -it -v ${PWD}/dockerfiles/$(2).bats:/test.bats bats_test \
 || echo "Bats tests failed"
-	docker container prune -f && docker rmi bats_test -f
+	docker rmi bats_test -f
 	rm -rf files dockerfiles
 endef
 
