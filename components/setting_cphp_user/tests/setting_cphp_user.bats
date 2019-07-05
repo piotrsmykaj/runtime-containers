@@ -1,4 +1,3 @@
-#!/usr/bin/env bats
 
 @test "setting_cphp_user" {
       [ $(getent group cphp) ]

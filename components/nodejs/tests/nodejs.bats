@@ -1,4 +1,3 @@
-#!/usr/bin/env bats
 
 @test "Node installed in user CPHP" {
     su - cphp -c "node --version"

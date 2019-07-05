@@ -1,5 +1,3 @@
-#!/usr/bin/env bats
-
 
 @test "init_cphp_package" {
     sh -c "dpkg-query -l apt-utils"

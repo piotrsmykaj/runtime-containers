@@ -15,13 +15,19 @@ define php_task
 	python3 ../../bin/docker-template.py --template=$(2).dt --version=$(1)
 	mkdir dockerfiles
 	mv Dockerfile ./dockerfiles/$(1).d
+	mv $(2) ./dockerfiles/$(2).bats
 	docker build -f ./dockerfiles/$(1).d -t continuous-php:$(1) .
+	cat ../../bin/batsimage.d >> ./dockerfiles/$(1).d
+	docker build -f ./dockerfiles/$(1).d -t bats_test .
+	docker run -it -v ${PWD}/dockerfiles/$(2).bats:/test.bats
+	docker container prune
+	docker rmi bats_test
 	rm -rf dockerfiles
 	rm -rf files
 endef
 
 generic:
-	$(call php_task,generic,)
+	$(call php_task,None,generic)
 .PHONY: generic
 
 # Obsolete tags

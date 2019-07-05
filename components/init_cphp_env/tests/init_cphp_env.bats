@@ -1,4 +1,3 @@
-#!/usr/bin/env bats
 
 @test "init_cphp_env" {
      [ "${CONTINUOUSPHP}" = "continuousphp" ]

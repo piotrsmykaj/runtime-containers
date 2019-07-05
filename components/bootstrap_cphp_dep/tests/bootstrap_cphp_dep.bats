@@ -1,4 +1,3 @@
-#!/usr/bin/env bats
 
 @test "bootstrap_cphp_env" {
       [ -f /tmp/bootstrap.sh ]

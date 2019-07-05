@@ -1,4 +1,3 @@
-#!/usr/bin/env bats
 
 @test "pip_and_coid" {
       sh -c "dpkg-query -l python3-pip"

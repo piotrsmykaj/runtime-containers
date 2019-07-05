@@ -6,9 +6,12 @@ from shutil import copy2
 """ State :
 
 php710 build succcesfully : make php710
-But we still need to get a copy of all files in /files : this is not efficient
-This script must copy each needed files.
+this script must create *.bats when component are loaded
 
+this script cannot be extended to other context at the moment since it requires components with .dtc 
+extension and corresponding file hierarchy and templates with .dt extension
+
+Tests of these requirements are missing
 """
 
 
@@ -31,6 +34,11 @@ def parent(path):
     return '/'.join(path.split('/')[:-1])
 
 
+def leaf(path):
+    """ Leaf of path file or folder """
+    return path.split('/')[-1]
+
+
 def transfer(file2add):
     """ Copy a file and if needed recursevily reconstructs the new path """
     def safe_path(path):
@@ -45,6 +53,7 @@ def transfer(file2add):
 
 
 def match_component(text):
+
     return re.search(';([a-zA-Z0-9_\.\-\/]+)', text)
 
 
@@ -52,8 +61,11 @@ def match_additional_files(text):
     return re.search('(ADD|COPY)+ ([a-zA-Z0-9_\.\-\/]+)', text)
 
 
-def replace_component(line):
+def replace_component(line, batsfile):
     def load_component(match_object):
+        m = match_object.group(1)
+        with open(parent(m) + '/tests/' + leaf(parent(m)) + '.bats') as batscomponent:
+            batsfile.write(batscomponent.read())
         with open(match_object.group(1), 'r') as component:
             content = component.read()
             lines = content.split('\n')
@@ -63,7 +75,7 @@ def replace_component(line):
                     transfer(file2add)
             return content
 
-    return re.sub(';([a-zA-Z0-9_\.\-\/]+\.dtc)', load_component, line)
+    return re.sub(';([a-zA-Z0-9_\.\-\/]+)', load_component, line)
 
 
 def replace_variable(line):
@@ -78,9 +90,10 @@ def replace_variable(line):
 
 
 if __name__ == '__main__':
-    with open(variables['template'], 'r') as template:
-        with open('Dockerfile', 'w') as output:
-            output.write(replace_component(
-                replace_variable(template.read())))
-    output.close()
-    template.close()
+    generic_name = variables['template'][:-3]
+    with open(generic_name, 'a') as batsfile:
+        batsfile.write('#!/usr/bin/env bats\n')
+        with open(variables['template'], 'r') as template:
+            with open('Dockerfile', 'w') as output:
+                output.write(replace_component(
+                    replace_variable(template.read()), batsfile))
