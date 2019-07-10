@@ -11,33 +11,13 @@ CYAN    := "\\033[1;36m"
 
 
 define php_task
-	mkdir files \
-|| echo "files directory already exists"
-	python3 ../../bin/docker-template.py --template=$(2).dt --version=$(1) \
-|| echo "Dockerfile generation failed"
-	mkdir dockerfiles \
-|| echo "dockerfiles directory already exists"
-	mv Dockerfile ./dockerfiles/$(1).d \
-|| echo "Dockerfile move failed"
-	mv $(2) ./dockerfiles/$(2).bats \
-|| echo "bats tests move failed"
-	docker build -f ./dockerfiles/$(1).d -t continuous-php:$(1) . \
-|| echo "Error while building specific image"
-	cat ../../bin/batsimage.d >> ./dockerfiles/$(1).d \
-|| echo "Composing bats dockerfile"
-	docker build -f ./dockerfiles/$(1).d -t bats_test . \
-|| echo "Error while creating bats image"
-	docker run -it -v ${PWD}/dockerfiles/$(2).bats:/test.bats bats_test \
-|| echo "Bats tests failed"
-	docker rmi bats_test -f \
-|| echo "Error while deleting bats image"
-	rm -rf files dockerfiles \
-|| echo "Error while deleting files & dockerfiles directories"
+	make clean
+	python3 ../../bin/docker-template.py --template=$(1).xml --base=$(2) --tag=$(3)
 endef
 
 
 generic:
-	$(call php_task,generic,generic)
+	$(call php_task,generic,debian:jessie,continuousphp:generic)
 .PHONY: generic
 
 # Obsolete tags
@@ -67,29 +47,37 @@ generic:
 # .PHONY: php556
 
 php564:
-	$(call php_task,5.6.4-fpm,phpv1)
+	$(call php_task,generic,php:5.6.4-fpm,continuousphp:5.6.4-fpm)
 .PHONY: php564
 
 php7022:
-	$(call php_task,7.0.22-fpm,phpv1)
+	$(call php_task,generic,php:7.0.22-fpm,continuousphp:7.0.22-fpm)
 .PHONY: php7022
 
 php704:
-	$(call php_task,7.0.4-fpm,phpv1)
+	$(call php_task,generic,php:7.0.4-fpm,continuousphp:7.0.4-fpm)
 .PHONY: php704
 
 php710:
-	$(call php_task,7.1.0-fpm,phpv1)
+	$(call php_task,generic,php:7.1.0-fpm,continuousphp:7.1.0-fpm)
 .PHONY: php710
 
 php7112:
-	$(call php_task,7.1.12-fpm,phpv1)
+	$(call php_task,generic,php:7.1.12-fpm,continuousphp:7.1.12-fpm)
 .PHONY: php7112
 
 php720:
-	$(call php_task,7.2-fpm,phpv2)
+	$(call php_task,generic,php:7.2-fpm,continuousphp:7.2-fpm)
 .PHONY: php720
 
 php723:
-	$(call php_task,7.2.3-fpm,phpv2)
+	$(call php_task,generic,php:7.2.3-fpm,continuousphp:7.2.3-fpm)
 .PHONY: php723
+
+clean:
+	rm -rf files dockerfiles
+.PHONY: clean
+
+clean_image:
+	docker rmi $(docker images | grep "continuousphp")
+.PHONY: clean_image

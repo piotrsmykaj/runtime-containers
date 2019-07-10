@@ -1,99 +1,129 @@
 import os
 import re
 import sys
-from shutil import copy2
-
-""" State :
-
-php710 build succcesfully : make php710
-this script must create *.bats when component are loaded
-
-this script cannot be extended to other context at the moment since it requires components with .dtc 
-extension and corresponding file hierarchy and templates with .dt extension
-
-Tests of these requirements are missing
-"""
+import subprocess
+import xml.etree.ElementTree as et
+from shutil import copy2, copytree, rmtree
 
 
-def get_variables():
-    variables = {}
-    for k in range(1, len(sys.argv)):
-        parsing = re.search('--(\w+)=([a-zA-Z0-9_\.\-]+)', sys.argv[k])
-        try:
-            variables[parsing.group(1)] = parsing.group(2)
-        except Exception as e:
-            raise Exception('Error while getting arguments : ' + str(e))
-    return variables
-
-
-variables = get_variables()
-
-
-def parent(path):
-    """ Parent of path file or folder """
-    return '/'.join(path.split('/')[:-1])
+variables = {}
 
 
 def leaf(path):
-    """ Leaf of path file or folder """
+    """ Return leaf of given path """
     return path.split('/')[-1]
 
 
-def transfer(file2add):
-    """ Copy a file and if needed recursevily reconstructs the new path """
-    def safe_path(path):
-        if not os.path.exists(path):
-            safe_path(parent(path))
-            os.mkdir(path)
-    original_file_path = os.path.dirname(
-        os.path.realpath(__file__)) + '/../' + file2add.group(2)
-    new_file_path = os.getcwd() + '/' + file2add.group(2)
-    safe_path(parent(new_file_path))
-    copy2(original_file_path, new_file_path)
+def parent(path):
+    """ Return parent of given path """
+    return '/'.join(path.split('/')[:-1])
 
 
-def match_component(text):
-
-    return re.search(';([a-zA-Z0-9_\.\-\/]+)', text)
-
-
-def match_additional_files(text):
-    return re.search('(ADD|COPY)+ ([a-zA-Z0-9_\.\-\/]+)', text)
+def exec(cmd):
+    """ Execute shell command """
+    subprocess.call(cmd.split(' '))
 
 
-def replace_component(line, batsfile):
-    def load_component(match_object):
-        m = match_object.group(1)
-        with open(parent(m) + '/tests/' + leaf(parent(m)) + '.bats') as batscomponent:
-            batsfile.write(batscomponent.read())
-        with open(match_object.group(1), 'r') as component:
-            content = component.read()
-            lines = content.split('\n')
-            for line in lines:
-                file2add = match_additional_files(line)
-                if file2add is not None:
-                    transfer(file2add)
-            return content
-
-    return re.sub(';([a-zA-Z0-9_\.\-\/]+)', load_component, line)
-
-
-def replace_variable(line):
-    def load_variable(match_object):
+def get_inputs():
+    """ Store inputs in a dictionary """
+    for i in range(1, len(sys.argv)):
+        query = re.search('--(\w+)=([a-zA-Z0-9_\.\-\:]+)', sys.argv[i])
         try:
-            return variables[match_object.group(1)]
+            variables[query.group(1)] = query.group(2)
         except Exception as e:
-            print('Error while getting variables : ' + str(e))
-            return match_object.group(0)
+            print('Error while getting arguments : ' + str(e))
 
-    return re.sub('%(\w+)', load_variable, line)
+
+def prepare_environment():
+    """ Preparing files, dockerfiles and BATS tests """
+    def init_directories():
+        if not os.path.exists('files'):
+            os.mkdir('files')
+        if not os.path.exists('dockerfiles'):
+            os.mkdir('dockerfiles')
+
+    def generate_dockerfile():
+        with open('dockerfiles/'+variables['template']+'.d', 'w') as dockerfile:
+            dockerfile.write('FROM '+variables['base']+'\n')
+            root = et.parse('generic.xml').getroot()
+            for component in root.iter('component'):
+                dockerfile.write(
+                    open(component.attrib['path'], 'r').read()+'\n')
+
+    def move_additional_files():
+        root = et.parse('generic.xml').getroot()
+        for component in root.iter('component'):
+            component_path = component.attrib['path']
+            src = parent(component_path)+'/files'
+            if os.path.exists(src):
+                dst = 'files/' + leaf(parent(component_path))
+                os.mkdir(dst)
+                for item in os.listdir(src):
+                    obj = os.path.join(src, item)
+                    res = os.path.join(dst, item)
+                    if os.path.isdir(obj):
+                        copytree(obj, res)
+                    else:
+                        copy2(obj, res)
+
+    def generate_bats_file():
+        with open('dockerfiles/'+variables['template']+'.bats', 'w') as batsfile:
+            batsfile.write('#!/usr/bin/env bats\n')
+            root = et.parse('generic.xml').getroot()
+            for component in root.iter('component'):
+                component_path = parent(component.attrib['path'])
+                bats_path = '/'.join([component_path, 'tests',
+                                      leaf(component_path)+'.bats'])
+                with open(bats_path, 'r') as batscontent:
+                    batsfile.write(batscontent.read() + '\n')
+
+    def generate_bats_dockerfile():
+        with open('dockerfiles/'+variables['template']+'.bats.d', 'w') as batsdockerfile:
+            batsdockerfile.write('FROM '+variables['tag']+'\n')
+            root = et.parse('generic.xml').getroot()
+            for item in root.iter('bats'):
+                with open(item.attrib['path'], 'r') as batsdockerfilepart:
+                    batsdockerfile.write(batsdockerfilepart.read()+'\n')
+
+    init_directories()
+    generate_dockerfile()
+    move_additional_files()
+    generate_bats_file()
+    generate_bats_dockerfile()
+
+
+def generate_runtime_container():
+    exec('echo \"Generating runtime container...\"')
+    exec('docker build -f ./dockerfiles/{}.d -t {} .'.format(
+        variables['template'], variables['tag']))
+
+
+def run_bats_container():
+    exec('echo \"Generating bats container...\"')
+    exec(
+        'docker build -f ./dockerfiles/{}.bats.d -t bats_tests .'.format(variables['template']))
+    try:
+        exec('docker run -it -v {}/dockerfiles/{}.bats:/test.bats bats_tests'.format(
+            os.getcwd(), variables['template']))
+    except Exception as e:
+        print('One or more bats tests failed')
+    exec('docker image rm -f bats_tests')
+
+
+def clean_directories():
+    try:
+        rmtree('files')
+    except Exception as e:
+        print('Error while deleting \"files\"')
+    try:
+        rmtree('dockerfiles')
+    except Exception as e:
+        print('Error while deleting \"dockerfiles\"')
 
 
 if __name__ == '__main__':
-    generic_name = variables['template'][:-3]
-    with open(generic_name, 'a') as batsfile:
-        batsfile.write('#!/usr/bin/env bats\n')
-        with open(variables['template'], 'r') as template:
-            with open('Dockerfile', 'w') as output:
-                output.write(replace_component(
-                    replace_variable(template.read()), batsfile))
+    get_inputs()
+    prepare_environment()
+    generate_runtime_container()
+    run_bats_container()
+    clean_directories()
