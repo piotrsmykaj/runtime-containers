@@ -1,12 +1,21 @@
+import argparse
 import os
 import re
-import sys
-import subprocess
-import xml.etree.ElementTree as et
 from shutil import copy2, copytree, rmtree
+import subprocess
+import sys
+import yaml
 
 
 variables = {}
+parser = argparse.ArgumentParser(description='Runtime containers generator')
+parser.add_argument('cmd', nargs='?', type=str, help='Command')
+parser.add_argument('runtime', nargs='?', type=str, help='Runtime')
+parser.add_argument('--version', nargs='*', default='all',
+                    type=str, help='List of versions to compile')
+parser.add_argument('--clean', dest='clean',
+                    action='store_const', const=True, default=False)
+args = parser.parse_args()
 
 
 def leaf(path):
@@ -36,6 +45,13 @@ def get_inputs():
 
 def prepare_environment():
     """ Preparing files, dockerfiles and BATS tests """
+
+    with open(variables['template'], 'r') as data_template:
+        template = yaml.load(data_template, Loader=yaml.Loader)
+
+    def get_component_path(component_name):
+        return '/'.join([parent(os.path.realpath(__file__)), '../components', component_name, component_name+'.dtc'])
+
     def init_directories():
         if not os.path.exists('files'):
             os.mkdir('files')
@@ -45,15 +61,14 @@ def prepare_environment():
     def generate_dockerfile():
         with open('dockerfiles/'+variables['template']+'.d', 'w') as dockerfile:
             dockerfile.write('FROM '+variables['base']+'\n')
-            root = et.parse('generic.xml').getroot()
-            for component in root.iter('component'):
+            for component in template['components']:
+                component_path = get_component_path(component)
                 dockerfile.write(
-                    open(component.attrib['path'], 'r').read()+'\n')
+                    open(component_path, 'r').read()+'\n')
 
     def move_additional_files():
-        root = et.parse('generic.xml').getroot()
-        for component in root.iter('component'):
-            component_path = component.attrib['path']
+        for component in template['components']:
+            component_path = get_component_path(component)
             src = parent(component_path)+'/files'
             if os.path.exists(src):
                 dst = 'files/' + leaf(parent(component_path))
@@ -69,9 +84,8 @@ def prepare_environment():
     def generate_bats_file():
         with open('dockerfiles/'+variables['template']+'.bats', 'w') as batsfile:
             batsfile.write('#!/usr/bin/env bats\n')
-            root = et.parse('generic.xml').getroot()
-            for component in root.iter('component'):
-                component_path = parent(component.attrib['path'])
+            for component in template['components']:
+                component_path = parent(get_component_path(component))
                 bats_path = '/'.join([component_path, 'tests',
                                       leaf(component_path)+'.bats'])
                 with open(bats_path, 'r') as batscontent:
@@ -80,16 +94,15 @@ def prepare_environment():
     def generate_bats_dockerfile():
         with open('dockerfiles/'+variables['template']+'.bats.d', 'w') as batsdockerfile:
             batsdockerfile.write('FROM '+variables['tag']+'\n')
-            root = et.parse('generic.xml').getroot()
-            for item in root.iter('bats'):
-                with open(item.attrib['path'], 'r') as batsdockerfilepart:
-                    batsdockerfile.write(batsdockerfilepart.read()+'\n')
+            with open(parent(os.path.realpath(__file__))+'/../components/bats/batsimage.d', 'r') as batsdockerfilepart:
+                batsdockerfile.write(batsdockerfilepart.read()+'\n')
 
     init_directories()
     generate_dockerfile()
     move_additional_files()
     generate_bats_file()
-    generate_bats_dockerfile()
+    if template['bats']:
+        generate_bats_dockerfile()
 
 
 def generate_runtime_container():

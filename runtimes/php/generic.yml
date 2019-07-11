@@ -1,0 +1,16 @@
+flavour: dev
+bats: true
+versions:
+  - php-7.1-cli
+  - php-7.2-cli
+  - php-7.3-cli
+components:
+  - init_cphp_env
+  - init_cphp_package
+  - ssh_login_fix
+  - setting_cphp_user
+  - bootstrap_cphp_dep
+  - n
+  - pip_and_coid
+  - azure_cli
+  - terraform
