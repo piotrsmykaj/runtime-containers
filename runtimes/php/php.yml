@@ -1,9 +1,10 @@
 flavour: dev
 bats: true
 versions:
-  - php-7.1-cli
-  - php-7.2-cli
-  - php-7.3-cli
+  - generic
+  - 7.1-cli
+  - 7.2-cli
+  - 7.3-cli
 components:
   - init_cphp_env
   - init_cphp_package

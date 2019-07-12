@@ -8,14 +8,25 @@ import yaml
 
 
 variables = {}
-# parser = argparse.ArgumentParser(description='Runtime containers generator')
-# parser.add_argument('cmd', nargs='?', type=str, help='Command')
-# parser.add_argument('runtime', nargs='?', type=str, help='Runtime')
-# parser.add_argument('--version', nargs='*', default='all',
-#                     type=str, help='List of versions to compile')
-# parser.add_argument('--clean', dest='clean',
-#                     action='store_const', const=True, default=False)
-# args = parser.parse_args()
+
+flavours = {
+    'deb': 'debian:jessie'
+}
+
+parser = argparse.ArgumentParser(description='Runtime containers generator')
+parser.add_argument('cmd', nargs='?', type=str, help='Command')
+parser.add_argument('runtime', nargs='?', type=str, help='Runtime')
+parser.add_argument('--version', nargs='*', default='all',
+                    type=str, help='List of versions to compile')
+parser.add_argument('--clean', dest='clean',
+                    action='store_const', const=True, default=False)
+args = parser.parse_args()
+
+with open(args.runtime+'.yml', 'r') as data_template:
+    template = yaml.load(data_template, Loader=yaml.Loader)
+
+versions = list(filter(lambda x: args.version ==
+                       'all' or x in args.version, template['versions']))
 
 
 def leaf(path):
@@ -33,21 +44,8 @@ def exec(cmd):
     subprocess.call(cmd.split(' '))
 
 
-def get_inputs():
-    """ Store inputs in a dictionary """
-    for i in range(1, len(sys.argv)):
-        query = re.search('--(\w+)=([a-zA-Z0-9_\.\-\:]+)', sys.argv[i])
-        try:
-            variables[query.group(1)] = query.group(2)
-        except Exception as e:
-            print('Error while getting arguments : ' + str(e))
-
-
-def prepare_environment():
+def prepare_building_environment():
     """ Preparing files, dockerfiles and BATS tests """
-
-    with open(variables['template'], 'r') as data_template:
-        template = yaml.load(data_template, Loader=yaml.Loader)
 
     def get_component_path(component_name):
         return '/'.join([parent(os.path.realpath(__file__)), '../components', component_name, component_name+'.dtc'])
@@ -57,14 +55,6 @@ def prepare_environment():
             os.mkdir('files')
         if not os.path.exists('dockerfiles'):
             os.mkdir('dockerfiles')
-
-    def generate_dockerfile():
-        with open('dockerfiles/'+variables['template']+'.d', 'w') as dockerfile:
-            dockerfile.write('FROM '+variables['base']+'\n')
-            for component in template['components']:
-                component_path = get_component_path(component)
-                dockerfile.write(
-                    open(component_path, 'r').read()+'\n')
 
     def move_additional_files():
         for component in template['components']:
@@ -81,8 +71,21 @@ def prepare_environment():
                     else:
                         copy2(obj, res)
 
-    def generate_bats_file():
-        with open('dockerfiles/'+variables['template']+'.bats', 'w') as batsfile:
+    def generate_dockerfile(version):
+        with open('dockerfiles/{}_{}.d'.format(args.runtime, version), 'w') as dockerfile:
+            # here replace by flavour image or version "example php:version"
+            if version == 'generic':
+                base = 'debian:jessie'
+            else:
+                base = '{}:{}'.format(args.runtime, version)
+            dockerfile.write('FROM '+base+'\n')
+            for component in template['components']:
+                component_path = get_component_path(component)
+                dockerfile.write(
+                    open(component_path, 'r').read()+'\n')
+
+    def generate_bats_file(version):
+        with open('dockerfiles/{}_{}.bats'.format(args.runtime, version), 'w') as batsfile:
             batsfile.write('#!/usr/bin/env bats\n')
             for component in template['components']:
                 component_path = parent(get_component_path(component))
@@ -91,36 +94,43 @@ def prepare_environment():
                 with open(bats_path, 'r') as batscontent:
                     batsfile.write(batscontent.read() + '\n')
 
-    def generate_bats_dockerfile():
-        with open('dockerfiles/'+variables['template']+'.bats.d', 'w') as batsdockerfile:
-            batsdockerfile.write('FROM '+variables['tag']+'\n')
-            with open(parent(os.path.realpath(__file__))+'/../components/bats/batsimage.d', 'r') as batsdockerfilepart:
+    def generate_bats_dockerfile(version):
+        with open('dockerfiles/{}_{}.bats.d'.format(args.runtime, version), 'w') as batsdockerfile:
+            # There you must specify the resulting tag
+            batsdockerfile.write(
+                'FROM '+'continuous:{}_{}'.format(args.runtime, version)+'\n')
+            with open(parent(os.path.realpath(__file__))+'/../bats/batsimage.d', 'r') as batsdockerfilepart:
                 batsdockerfile.write(batsdockerfilepart.read()+'\n')
 
     init_directories()
-    generate_dockerfile()
     move_additional_files()
-    generate_bats_file()
-    if template['bats']:
-        generate_bats_dockerfile()
+    for version in versions:
+        generate_dockerfile(version)
+        generate_bats_dockerfile(version)
+        generate_bats_file(version)
 
 
 def generate_runtime_container():
-    exec('echo \"Generating runtime container...\"')
-    exec('docker build -f ./dockerfiles/{}.d -t {} .'.format(
-        variables['template'], variables['tag']))
+    exec('echo \"Generating runtime containers...\"')
+    for version in versions:
+        print('docker build -f ./dockerfiles/{}_{}.d -t {} .'.format(
+            args.runtime, version, 'continuous:{}_{}'.format(args.runtime, version)))
+        exec('docker build -f ./dockerfiles/{}_{}.d -t {} .'.format(
+            args.runtime, version, 'continuous:{}_{}'.format(args.runtime, version)))
 
 
 def run_bats_container():
     exec('echo \"Generating bats container...\"')
-    exec(
-        'docker build -f ./dockerfiles/{}.bats.d -t bats_tests .'.format(variables['template']))
-    try:
-        exec('docker run -it -v {}/dockerfiles/{}.bats:/test.bats bats_tests'.format(
-            os.getcwd(), variables['template']))
-    except Exception as e:
-        print('One or more bats tests failed')
-    exec('docker image rm -f bats_tests')
+    for version in versions:
+        print('Preparing bats container for version : '+version)
+        exec(
+            'docker build -f ./dockerfiles/{}_{}.bats.d -t bats_tests .'.format(args.runtime, version))
+        try:
+            exec('docker run -it -v {}/dockerfiles/{}_{}.bats:/test.bats bats_tests'.format(
+                os.getcwd(), args.runtime, version))
+        except Exception as e:
+            print('One or more bats tests failed')
+        exec('docker image rm -f bats_tests')
 
 
 def clean_directories():
@@ -135,8 +145,12 @@ def clean_directories():
 
 
 if __name__ == '__main__':
-    get_inputs()
-    prepare_environment()
-    generate_runtime_container()
-    run_bats_container()
-    clean_directories()
+    if args.cmd == 'build':
+        clean_directories()
+        print('Building docker images : ')
+        print('\n- '.join([' '] + versions))
+        prepare_building_environment()
+        generate_runtime_container()
+        run_bats_container()
+        if args.clean:
+            clean_directories()
