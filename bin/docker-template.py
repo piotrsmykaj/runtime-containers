@@ -6,6 +6,14 @@ import subprocess
 import sys
 import yaml
 
+_ROOT = '/'.join([os.path.dirname(os.path.realpath(__file__)), '..'])
+_BATSIMAGE = '/'.join([_ROOT,
+                       'bats', 'batsimage.d'])
+_TMP = '/'.join([_ROOT, 'bin', 'tmp'])
+_FILES = '/'.join([_ROOT, 'bin', 'tmp', 'files'])
+_DOCKERFILES = '/'.join([_ROOT, 'bin',
+                         'tmp', 'dockerfiles'])
+_COMPONENTS = '/'.join([_ROOT, 'components'])
 
 variables = {}
 
@@ -22,7 +30,7 @@ parser.add_argument('--clean', dest='clean',
                     action='store_const', const=True, default=False)
 args = parser.parse_args()
 
-with open(args.runtime+'.yml', 'r') as data_template:
+with open('/'.join([_ROOT, 'runtimes', args.runtime, args.runtime+'.yml']), 'r') as data_template:
     template = yaml.load(data_template, Loader=yaml.Loader)
 
 versions = list(filter(lambda x: args.version ==
@@ -48,20 +56,19 @@ def prepare_building_environment():
     """ Preparing files, dockerfiles and BATS tests """
 
     def get_component_path(component_name):
-        return '/'.join([parent(os.path.realpath(__file__)), '../components', component_name, component_name+'.dtc'])
+        return '/'.join([_COMPONENTS, component_name, component_name+'.dtc'])
 
     def init_directories():
-        if not os.path.exists('files'):
-            os.mkdir('files')
-        if not os.path.exists('dockerfiles'):
-            os.mkdir('dockerfiles')
+        os.mkdir(_TMP)
+        os.mkdir(_FILES)
+        os.mkdir(_DOCKERFILES)
 
     def move_additional_files():
         for component in template['components']:
             component_path = get_component_path(component)
             src = parent(component_path)+'/files'
             if os.path.exists(src):
-                dst = 'files/' + leaf(parent(component_path))
+                dst = '/'.join([_FILES, leaf(parent(component_path))])
                 os.mkdir(dst)
                 for item in os.listdir(src):
                     obj = os.path.join(src, item)
@@ -72,12 +79,12 @@ def prepare_building_environment():
                         copy2(obj, res)
 
     def generate_dockerfile(version):
-        with open('dockerfiles/{}_{}.d'.format(args.runtime, version), 'w') as dockerfile:
+        with open(_DOCKERFILES+'/{}_{}.d'.format(args.runtime, version), 'w') as dockerfile:
             # here replace by flavour image or version "example php:version"
             if version == 'generic':
                 base = 'debian:jessie'
             else:
-                base = '{}:{}'.format(args.runtime, version)
+                base = '{}:{}'.format(template['image'], version)
             dockerfile.write('FROM '+base+'\n')
             for component in template['components']:
                 component_path = get_component_path(component)
@@ -85,21 +92,21 @@ def prepare_building_environment():
                     open(component_path, 'r').read()+'\n')
 
     def generate_bats_file(version):
-        with open('dockerfiles/{}_{}.bats'.format(args.runtime, version), 'w') as batsfile:
+        with open(_DOCKERFILES+'/{}_{}.bats'.format(args.runtime, version), 'w') as batsfile:
             batsfile.write('#!/usr/bin/env bats\n')
             for component in template['components']:
                 component_path = parent(get_component_path(component))
                 bats_path = '/'.join([component_path, 'tests',
-                                      leaf(component_path)+'.bats'])
+                                      component+'.bats'])
                 with open(bats_path, 'r') as batscontent:
                     batsfile.write(batscontent.read() + '\n')
 
     def generate_bats_dockerfile(version):
-        with open('dockerfiles/{}_{}.bats.d'.format(args.runtime, version), 'w') as batsdockerfile:
+        with open(_DOCKERFILES+'/{}_{}.bats.d'.format(args.runtime, version), 'w') as batsdockerfile:
             # There you must specify the resulting tag
             batsdockerfile.write(
                 'FROM '+'continuous:{}_{}'.format(args.runtime, version)+'\n')
-            with open(parent(os.path.realpath(__file__))+'/../bats/batsimage.d', 'r') as batsdockerfilepart:
+            with open(_BATSIMAGE, 'r') as batsdockerfilepart:
                 batsdockerfile.write(batsdockerfilepart.read()+'\n')
 
     init_directories()
@@ -113,10 +120,10 @@ def prepare_building_environment():
 def generate_runtime_container():
     exec('echo \"Generating runtime containers...\"')
     for version in versions:
-        print('docker build -f ./dockerfiles/{}_{}.d -t {} .'.format(
-            args.runtime, version, 'continuous:{}_{}'.format(args.runtime, version)))
-        exec('docker build -f ./dockerfiles/{}_{}.d -t {} .'.format(
-            args.runtime, version, 'continuous:{}_{}'.format(args.runtime, version)))
+        print('docker build -f {}/dockerfiles/{}_{}.d -t {} {}'.format(
+            _TMP, args.runtime, version, 'continuous:{}_{}'.format(args.runtime, version), _TMP))
+        exec('docker build -f {}/dockerfiles/{}_{}.d -t {} {}'.format(
+            _TMP, args.runtime, version, 'continuous:{}_{}'.format(args.runtime, version), _TMP))
 
 
 def run_bats_container():
@@ -124,10 +131,10 @@ def run_bats_container():
     for version in versions:
         print('Preparing bats container for version : '+version)
         exec(
-            'docker build -f ./dockerfiles/{}_{}.bats.d -t bats_tests .'.format(args.runtime, version))
+            'docker build -f {}/dockerfiles/{}_{}.bats.d -t bats_tests {}'.format(_TMP, args.runtime, version, _TMP))
         try:
             exec('docker run -it -v {}/dockerfiles/{}_{}.bats:/test.bats bats_tests'.format(
-                os.getcwd(), args.runtime, version))
+                 _TMP, args.runtime, version))
         except Exception as e:
             print('One or more bats tests failed')
         exec('docker image rm -f bats_tests')
@@ -135,13 +142,9 @@ def run_bats_container():
 
 def clean_directories():
     try:
-        rmtree('files')
+        rmtree(_TMP)
     except Exception as e:
-        print('Error while deleting \"files\"')
-    try:
-        rmtree('dockerfiles')
-    except Exception as e:
-        print('Error while deleting \"dockerfiles\"')
+        print('Error while deleting \"tmp\" directory')
 
 
 if __name__ == '__main__':

@@ -1,18 +1,15 @@
 flavour: deb
 bats: true
-image: php
+image: node
 versions:
-  - generic
-  - 7.1-cli
-  - 7.2-cli
-  - 7.3-cli
+  - latest
 components:
   - init_cphp_env
   - init_cphp_package
   - ssh_login_fix
   - setting_cphp_user
   - bootstrap_cphp_dep
-  - n
   - pip_and_coid
+  - npm
   - azure_cli
   - terraform
