@@ -15,11 +15,6 @@ _DOCKERFILES = '/'.join([_ROOT, 'bin', 'tmp', 'dockerfiles'])
 _COMPONENTS = '/'.join([_ROOT, 'components'])
 
 
-def exec(cmd):
-    """ Execute shell command """
-    subprocess.call(cmd.split(' '))
-
-
 class App:
 
     def __init__(self, args):
@@ -42,12 +37,12 @@ class App:
             "test": self.test
         }
 
-    def init_directories(self):
-        try:
-            rmtree(self.tmp)
-        except Exception as e:
-            print('No need to clean tmp directory : ' + str(e))
+    def exec(self, cmd, print_output=True):
+        """ Execute shell command """
+        return subprocess.run(cmd.split(' '), capture_output=print_output).returncode
 
+    def init_directories(self):
+        self.exec('rm -rf '+self.tmp)
         os.mkdir(self.tmp)
         os.mkdir(self.files)
         os.mkdir(self.dockerfiles)
@@ -85,7 +80,7 @@ class App:
         for version in self.versions:
             print('docker build -f {}/dockerfiles/{}_{}.d -t {} {}'.format(
                 self.tmp, self.runtime, version, 'continuous:{}_{}'.format(self.runtime, version), self.tmp))
-            exec('docker build -f {}/dockerfiles/{}_{}.d -t {} {}'.format(
+            self.exec('docker build -f {}/dockerfiles/{}_{}.d -t {} {}'.format(
                 self.tmp, self.runtime, version, 'continuous:{}_{}'.format(self.runtime, version), self.tmp))
 
     def generate_bats_dockerfile(self):
@@ -110,14 +105,15 @@ class App:
     def generate_and_run_bats_container(self):
         for version in self.versions:
             print('Preparing bats container for version : '+version)
-            exec(
+            self.exec(
                 'docker build -f {}/dockerfiles/{}_{}.bats.d -t bats_tests {}'.format(self.tmp, self.runtime, version, self.tmp))
             try:
-                exec('docker run -it -v {}/dockerfiles/{}_{}.bats:/test.bats bats_tests'.format(
-                    self.tmp, self.runtime, version))
+                print('Results of bats tests for version : '+version)
+                self.exec('docker run -it -v {}/dockerfiles/{}_{}.bats:/test.bats bats_tests'.format(
+                    self.tmp, self.runtime, version), False)
             except Exception as e:
                 print('One or more bats tests failed')
-            exec('docker image rm -f bats_tests')
+            self.exec('docker image rm -f bats_tests')
 
     def clean_directories(self):
         rmtree(self.tmp)
@@ -139,8 +135,16 @@ class App:
             self.clean_directories()
 
     def test(self):
-        print('Testing dockeri images : ')
-        print('\n- '.join(self.versions))
+        print(' ------ Testing docker images ------ ')
+
+        # For each version tests if the associated container exists
+
+        print('Versions that are supposed to exist : \n' +
+              '\n'.join(self.versions))
+        self.versions = list(filter(lambda version:
+                                    self.exec('/'.join([_ROOT, 'bin', 'check_container.sh continuous:{}_{}'
+                                                        .format(self.runtime, version)])) == 0, self.versions))
+        print('Versions that really exist : \n' + '\n'.join(self.versions))
 
         self.init_directories()
         self.move_additional_files()
@@ -158,11 +162,6 @@ class App:
 
 
 if __name__ == '__main__':
-    variables = {}
-
-    flavours = {
-        'deb': 'debian:jessie'
-    }
 
     parser = argparse.ArgumentParser(
         description='Runtime containers generator')
