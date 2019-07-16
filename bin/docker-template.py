@@ -41,10 +41,17 @@ class App:
 
     def exec(self, cmd, print_output=True):
         """ Execute shell command """
-        return subprocess.run(cmd.split(' '), capture_output=print_output).returncode
+        if print_output:
+            with open('/'.join([_ROOT, 'bin', 'tmp', 'logs.txt']), 'a+') as outputfile:
+                output = subprocess.run(
+                    cmd.split(' '), stdout=outputfile)
+            return output.returncode
+        else:
+            output = subprocess.run(cmd.split(' '), capture_output=False)
+            return output.returncode
 
     def init_directories(self):
-        self.exec('rm -rf '+self.tmp)
+        self.exec('rm -rf '+self.tmp, False)
         os.mkdir(self.tmp)
         os.mkdir(self.files)
         os.mkdir(self.dockerfiles)
@@ -144,7 +151,7 @@ class App:
               '\n'.join(self.versions))
         self.versions = list(filter(lambda version:
                                     self.exec('/'.join([self.root, 'bin', 'check_container.sh continuous:{}_{}'
-                                                        .format(self.runtime, version)])) == 0, self.versions))
+                                                        .format(self.runtime, version)]), False) == 0, self.versions))
         print('Versions that really exist : \n' + '\n'.join(self.versions))
 
         self.init_directories()
