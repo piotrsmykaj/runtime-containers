@@ -1,3 +1,5 @@
+#!/usr/local/bin/python3
+
 import argparse
 import os
 import re
@@ -108,7 +110,8 @@ class App:
             self.exec(
                 'docker build -f {}/dockerfiles/{}_{}.bats.d -t bats_tests {}'.format(self.tmp, self.runtime, version, self.tmp))
             try:
-                print('Results of bats tests for version : '+version)
+                print(
+                    "Results of bats tests for version : "+version)
                 self.exec('docker run -it -v {}/dockerfiles/{}_{}.bats:/test.bats bats_tests'.format(
                     self.tmp, self.runtime, version), False)
             except Exception as e:
@@ -131,8 +134,6 @@ class App:
         self.generate_bats_dockerfile()
         self.generate_bats_file()
         self.generate_and_run_bats_container()
-        if self.clean:
-            self.clean_directories()
 
     def test(self):
         print(' ------ Testing docker images ------ ')
@@ -142,7 +143,7 @@ class App:
         print('Versions that are supposed to exist : \n' +
               '\n'.join(self.versions))
         self.versions = list(filter(lambda version:
-                                    self.exec('/'.join([_ROOT, 'bin', 'check_container.sh continuous:{}_{}'
+                                    self.exec('/'.join([self.root, 'bin', 'check_container.sh continuous:{}_{}'
                                                         .format(self.runtime, version)])) == 0, self.versions))
         print('Versions that really exist : \n' + '\n'.join(self.versions))
 
@@ -151,12 +152,12 @@ class App:
         self.generate_bats_dockerfile()
         self.generate_bats_file()
         self.generate_and_run_bats_container()
-        if self.clean:
-            self.clean_directories()
 
     def run(self):
         if self.cmd in self.running_map:
             self.running_map[self.cmd]()
+            if self.clean:
+                self.clean_directories()
         else:
             raise Exception('Command is not handled')
 
