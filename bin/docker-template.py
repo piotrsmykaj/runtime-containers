@@ -9,21 +9,13 @@ import sys
 import yaml
 
 
-_ROOT = '/'.join([os.path.dirname(os.path.realpath(__file__)), '..'])
-_BATSIMAGE = '/'.join([_ROOT, 'bats', 'batsimage.d'])
-_TMP = '/'.join([_ROOT, 'bin', 'tmp'])
-_FILES = '/'.join([_ROOT, 'bin', 'tmp', 'files'])
-_DOCKERFILES = '/'.join([_ROOT, 'bin', 'tmp', 'dockerfiles'])
-_COMPONENTS = '/'.join([_ROOT, 'components'])
-
-
 class App:
 
     def __init__(self, args):
 
         self.root = '/'.join([os.path.dirname(os.path.realpath(__file__)), '..'])
         self.batsimage = '/'.join([self.root, 'bats', 'batsimage.d'])
-        self.logs = '/'.join([_ROOT, 'bin', 'logs.txt'])
+        self.logs = '/'.join([self.root, 'bin', 'logs.txt'])
         self.tmp = '/'.join([self.root, 'bin', 'tmp'])
         self.files = '/'.join([self.root, 'bin', 'tmp', 'files'])
         self.dockerfiles = '/'.join([self.root, 'bin', 'tmp', 'dockerfiles'])
@@ -154,7 +146,7 @@ class App:
         """ Preparing files, dockerfiles and BATS tests """
 
         self.display('Building docker images : \n', 'blue')
-        self.display('\n'.join(+ self.versions), 'blue')
+        self.display('\n'.join(self.versions), 'blue')
 
         self.init_directories()
         self.move_additional_files()
@@ -166,7 +158,7 @@ class App:
 
         self.versions = list(filter(lambda version:
                                     self.exec('/'.join([self.root, 'bin', 'check_container.sh continuous:{}_{}'
-                                                        .format(self.runtime, version)])) == 0, self.versions), not self.verbose)
+                                                        .format(self.runtime, version)]), not self.verbose) == 0, self.versions))
 
         self.display('Versions that have been created : \n' +
                      '\n'.join(self.versions), "green")
@@ -202,14 +194,14 @@ class App:
 if __name__ == '__main__':
 
     parser = argparse.ArgumentParser(
-        description='Runtime containers generator')
+        description='Continuous runtime container generator')
     parser.add_argument('cmd', nargs='?', type=str, help='Command')
     parser.add_argument('runtime', nargs='?', type=str, help='Runtime')
     parser.add_argument('--version', nargs='*', default='all',
                         type=str, help='List of versions to compile')
-    parser.add_argument('--clean', dest='clean',
+    parser.add_argument('--clean', dest='clean', help='Remove all temporary files',
                         action='store_const', const=True, default=False)
-    parser.add_argument('--verbose', dest='verbose',
+    parser.add_argument('--verbose', dest='verbose', help='Print the entire output',
                         action='store_const', const=True, default=False)
     args = parser.parse_args()
     context = App(args)
