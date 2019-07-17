@@ -42,6 +42,7 @@ class App:
         }
 
     def display(self, text, color):
+        """ Print colored text """
         if color not in self.color_map:
             raise Exception('The following color is not handled : '+color)
         print(self.color_map[color],
@@ -61,18 +62,21 @@ class App:
         return output.returncode
 
     def clean_up_context(self):
+        """ Clean up temporary files """
         if os.path.exists(self.tmp):
             self.exec('rm -rf {}'.format(self.tmp), not self.verbose)
         if os.path.exists(self.logs):
             self.exec('rm -rf {}'.format(self.logs), not self.verbose)
 
     def init_directories(self):
+        """ Create necessary directories for command execution """
         self.clean_up_context()
         os.mkdir(self.tmp)
         os.mkdir(self.files)
         os.mkdir(self.dockerfiles)
 
     def move_additional_files(self):
+        """ Place files that are called by ADD or COPY in Dockerfile """
         for component in self.template['components']:
             src = '/'.join([self.components, component, 'files'])
             if os.path.exists(src):
@@ -87,6 +91,7 @@ class App:
                         copy2(obj, res)
 
     def generate_runtime_dockerfile(self):
+        """ Create a corresponding Dockerfile for each version of specified runtime """
         for version in self.versions:
             with open(self.dockerfiles+'/{}_{}.d'.format(self.runtime, version), 'w') as dockerfile:
                 # Here replace by flavour image or version "example php:version"
@@ -102,6 +107,7 @@ class App:
                         open(component_file, 'r').read()+'\n')
 
     def generate_runtime_container(self):
+        """ Create a container for each version of specified runtime """
         for version in self.versions:
             self.display('docker build -f {}/dockerfiles/{}_{}.d -t {} {}'.format(
                 self.tmp, self.runtime, version, 'continuous:{}_{}'.format(self.runtime, version), self.tmp), "yellow")
@@ -109,6 +115,7 @@ class App:
                 self.tmp, self.runtime, version, 'continuous:{}_{}'.format(self.runtime, version), self.tmp), not self.verbose)
 
     def generate_bats_dockerfile(self):
+        """ Create a Dockerfile to run bats tests in the container related to each version of specified runtime """
         for version in self.versions:
             with open(self.dockerfiles+'/{}_{}.bats.d'.format(self.runtime, version), 'w') as batsdockerfile:
                 # There you must specify the resulting tag
@@ -118,6 +125,7 @@ class App:
                     batsdockerfile.write(batsdockerfilepart.read()+'\n')
 
     def generate_bats_file(self):
+        """ Create bats file to run bats tests in the container related to each version of specified runtime """
         for version in self.versions:
             with open(self.dockerfiles+'/{}_{}.bats'.format(self.runtime, version), 'w') as batsfile:
                 batsfile.write('#!/usr/bin/env bats\n')
@@ -128,6 +136,7 @@ class App:
                         batsfile.write(batscontent.read() + '\n')
 
     def generate_and_run_bats_container(self):
+        """ Create the superior layer container to run bats tests in the container related to each version of specified runtime """
         for version in self.versions:
             self.display(
                 'Preparing bats container for version : '+version, "yellow")
@@ -168,12 +177,12 @@ class App:
                      '\n'.join(self.versions), "green")
 
     def test(self):
+        """ Run BATS tests """
         self.display(' ------ Testing docker images ------ ', "normal")
-
-        # For each version tests if the associated container exists
 
         self.display('Versions that are supposed to exist : \n' +
                      '\n'.join(self.versions), "blue")
+
         self.versions = list(filter(lambda version:
                                     self.exec('/'.join([self.root, 'bin', 'check_container.sh continuous:{}_{}'
                                                         .format(self.runtime, version)]), not self.verbose) == 0, self.versions))
@@ -187,6 +196,7 @@ class App:
         self.generate_and_run_bats_container()
 
     def run(self):
+        """ Run the specified command """
         if self.cmd in self.running_map:
             self.running_map[self.cmd]()
             if self.clean:
