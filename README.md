@@ -21,7 +21,7 @@ Architecture:
       The implementation of the component is made using the docker template script in python.
 
   2. Runtimes:
-      Runtime represent a platform around the same application goal (Language) like `php`, `javascript`, `ruby`, `python`.
+      Runtime represents a platform around the same application goal (Language) like `php`, `javascript`, `ruby`, `python`.
       Docker Template:
         The 
 
@@ -34,7 +34,8 @@ Architecture:
 
  - files
  - flavours
- - tests
+   - component.dtc
+   - tests
 
 ### Docker Template Component
 
@@ -44,6 +45,11 @@ Each flavours have dedicated `.dtc` file
 The template must have the following functionality:
 1. File path replacement ( replacement of the file path by the build context )
 2. Conditional statement of a runtime variable ( when runtime are build, I want condition the integration of the statement if variable condition are meet, like version of runtime php-7.1)
+
+#### Additional files
+
+When ADD or COPY are used in components, the specified must be stored inside a "files" directory but the written path must
+follow the syntax: files/component_name/path_to_files_in_files_directory
 
 ## Runtime
 
@@ -59,7 +65,7 @@ The configuration must have the following functionality:
 The tests bats must be build based on each runtime build, use template like this
 
 ```
-FROM %runtime-version
+FROM %continuous:runtime-version
 USER root
 RUN apt-get update && apt-get install -y git
 RUN git clone https://github.com/bats-core/bats-core /tmp/bats-core \
@@ -67,3 +73,4 @@ RUN git clone https://github.com/bats-core/bats-core /tmp/bats-core \
     && ./install.sh /usr/local
 CMD [ "bats", "/test.bats" ]
 ```
+

@@ -25,6 +25,8 @@ class App:
         self.clean = args.clean
         self.verbose = args.verbose
         self.replace = args.replace
+        if not os.path.exists([self.root, 'runtimes', self.runtime+'.yml']):
+            raise Exception('This runtime has no existing template.')
         with open('/'.join([self.root, 'runtimes', self.runtime+'.yml']), 'r') as data_template:
             self.template = yaml.load(data_template, Loader=yaml.Loader)
             self.versions = list(filter(lambda x: args.version ==
@@ -210,7 +212,8 @@ if __name__ == '__main__':
 
     parser = argparse.ArgumentParser(
         description='Continuous runtime container generator')
-    parser.add_argument('cmd', nargs='?', type=str, help='Command')
+    parser.add_argument('cmd', nargs='?', type=str,
+                        help='Command', choices=['build', 'test'])
     parser.add_argument('runtime', nargs='?', type=str, help='Runtime')
     parser.add_argument('--version', nargs='*', default='all',
                         type=str, help='List of versions to compile')
