@@ -24,6 +24,7 @@ class App:
         self.cmd = args.cmd
         self.clean = args.clean
         self.verbose = args.verbose
+        self.replace = args.replace
         with open('/'.join([self.root, 'runtimes', self.runtime+'.yml']), 'r') as data_template:
             self.template = yaml.load(data_template, Loader=yaml.Loader)
             self.versions = list(filter(lambda x: args.version ==
@@ -42,7 +43,7 @@ class App:
 
     def display(self, text, color):
         if color not in self.color_map:
-            raise Exception('This color is not handled : '+color)
+            raise Exception('The following color is not handled : '+color)
         print(self.color_map[color],
               text,
               self.color_map["normal"])
@@ -54,11 +55,10 @@ class App:
             with open(self.logs, 'a+') as outputfile:
                 output = subprocess.run(
                     cmd.split(' '), stdout=outputfile)
-            return output.returncode
         else:
             """ Display outputs into the shell """
             output = subprocess.run(cmd.split(' '), capture_output=False)
-            return output.returncode
+        return output.returncode
 
     def clean_up_context(self):
         if os.path.exists(self.tmp):
@@ -122,7 +122,7 @@ class App:
             with open(self.dockerfiles+'/{}_{}.bats'.format(self.runtime, version), 'w') as batsfile:
                 batsfile.write('#!/usr/bin/env bats\n')
                 for component in self.template['components']:
-                    bats_path = '/'.join([self.components, component, 'tests',
+                    bats_path = '/'.join([self.components, component, self.template['flavour'], 'tests',
                                           component+'.bats'])
                     with open(bats_path, 'r') as batscontent:
                         batsfile.write(batscontent.read() + '\n')
@@ -145,6 +145,10 @@ class App:
     def build(self):
         """ Preparing files, dockerfiles and BATS tests """
 
+        if not self.replace:
+            self.versions = list(filter(lambda version:
+                                        self.exec('/'.join([self.root, 'bin', 'check_container.sh continuous:{}_{}'
+                                                            .format(self.runtime, version)]), not self.verbose) != 0, self.versions))
         self.display('Building docker images : \n', 'blue')
         self.display('\n'.join(self.versions), 'blue')
 
@@ -188,7 +192,8 @@ class App:
             if self.clean:
                 self.clean_up_context()
         else:
-            raise Exception('This command is not handled')
+            raise Exception(
+                'The following command is not handled : ' + self.cmd)
 
 
 if __name__ == '__main__':
@@ -202,6 +207,8 @@ if __name__ == '__main__':
     parser.add_argument('--clean', dest='clean', help='Remove all temporary files',
                         action='store_const', const=True, default=False)
     parser.add_argument('--verbose', dest='verbose', help='Print the entire output',
+                        action='store_const', const=True, default=False)
+    parser.add_argument('--replace', dest='replace', help='Rebuild existing images',
                         action='store_const', const=True, default=False)
     args = parser.parse_args()
     context = App(args)
