@@ -23,6 +23,7 @@ class App:
 
         self.root = '/'.join([os.path.dirname(os.path.realpath(__file__)), '..'])
         self.batsimage = '/'.join([self.root, 'bats', 'batsimage.d'])
+        self.logs = '/'.join([_ROOT, 'bin', 'logs.txt'])
         self.tmp = '/'.join([self.root, 'bin', 'tmp'])
         self.files = '/'.join([self.root, 'bin', 'tmp', 'files'])
         self.dockerfiles = '/'.join([self.root, 'bin', 'tmp', 'dockerfiles'])
@@ -30,6 +31,7 @@ class App:
         self.runtime = args.runtime
         self.cmd = args.cmd
         self.clean = args.clean
+        self.verbose = args.verbose
         with open('/'.join([self.root, 'runtimes', self.runtime+'.yml']), 'r') as data_template:
             self.template = yaml.load(data_template, Loader=yaml.Loader)
             self.versions = list(filter(lambda x: args.version ==
@@ -38,20 +40,42 @@ class App:
             "build": self.build,
             "test": self.test
         }
+        self.color_map = {
+            "blue": "\033[1;34;40m",
+            "red": "\O33[1;31;40m",
+            "green": "\033[1;32;40m",
+            "yellow": "\033[1;33;40m",
+            "normal": "\033[0m"
+        }
+
+    def display(self, text, color):
+        if color not in self.color_map:
+            raise Exception('This color is not handled : '+color)
+        print(self.color_map[color],
+              text,
+              self.color_map["normal"])
 
     def exec(self, cmd, print_output=True):
         """ Execute shell command """
         if print_output:
-            with open('/'.join([_ROOT, 'bin', 'tmp', 'logs.txt']), 'a+') as outputfile:
+            """ Store outputs in logsfile """
+            with open(self.logs, 'a+') as outputfile:
                 output = subprocess.run(
                     cmd.split(' '), stdout=outputfile)
             return output.returncode
         else:
+            """ Display outputs into the shell """
             output = subprocess.run(cmd.split(' '), capture_output=False)
             return output.returncode
 
+    def clean_up_context(self):
+        if os.path.exists(self.tmp):
+            self.exec('rm -rf {}'.format(self.tmp), not self.verbose)
+        if os.path.exists(self.logs):
+            self.exec('rm -rf {}'.format(self.logs), not self.verbose)
+
     def init_directories(self):
-        self.exec('rm -rf '+self.tmp, False)
+        self.clean_up_context()
         os.mkdir(self.tmp)
         os.mkdir(self.files)
         os.mkdir(self.dockerfiles)
@@ -87,10 +111,10 @@ class App:
 
     def generate_runtime_container(self):
         for version in self.versions:
-            print('docker build -f {}/dockerfiles/{}_{}.d -t {} {}'.format(
-                self.tmp, self.runtime, version, 'continuous:{}_{}'.format(self.runtime, version), self.tmp))
+            self.display('docker build -f {}/dockerfiles/{}_{}.d -t {} {}'.format(
+                self.tmp, self.runtime, version, 'continuous:{}_{}'.format(self.runtime, version), self.tmp), "yellow")
             self.exec('docker build -f {}/dockerfiles/{}_{}.d -t {} {}'.format(
-                self.tmp, self.runtime, version, 'continuous:{}_{}'.format(self.runtime, version), self.tmp))
+                self.tmp, self.runtime, version, 'continuous:{}_{}'.format(self.runtime, version), self.tmp), not self.verbose)
 
     def generate_bats_dockerfile(self):
         for version in self.versions:
@@ -113,26 +137,24 @@ class App:
 
     def generate_and_run_bats_container(self):
         for version in self.versions:
-            print('Preparing bats container for version : '+version)
+            self.display(
+                'Preparing bats container for version : '+version, "yellow")
             self.exec(
-                'docker build -f {}/dockerfiles/{}_{}.bats.d -t bats_tests {}'.format(self.tmp, self.runtime, version, self.tmp))
+                'docker build -f {}/dockerfiles/{}_{}.bats.d -t bats_tests {}'.format(self.tmp, self.runtime, version, self.tmp), not self.verbose)
             try:
-                print(
-                    "Results of bats tests for version : "+version)
+                self.display(
+                    "Results of bats tests for version : "+version, "green")
                 self.exec('docker run -it -v {}/dockerfiles/{}_{}.bats:/test.bats bats_tests'.format(
                     self.tmp, self.runtime, version), False)
             except Exception as e:
-                print('One or more bats tests failed')
-            self.exec('docker image rm -f bats_tests')
-
-    def clean_directories(self):
-        rmtree(self.tmp)
+                self.display('One or more bats tests failed', "red")
+            self.exec('docker image rm -f bats_tests', not self.verbose)
 
     def build(self):
         """ Preparing files, dockerfiles and BATS tests """
 
-        print('Building docker images : ')
-        print('\n- '.join([' '] + self.versions))
+        self.display('Building docker images : \n', 'blue')
+        self.display('\n'.join(+ self.versions), 'blue')
 
         self.init_directories()
         self.move_additional_files()
@@ -142,17 +164,25 @@ class App:
         self.generate_bats_file()
         self.generate_and_run_bats_container()
 
+        self.versions = list(filter(lambda version:
+                                    self.exec('/'.join([self.root, 'bin', 'check_container.sh continuous:{}_{}'
+                                                        .format(self.runtime, version)])) == 0, self.versions), not self.verbose)
+
+        self.display('Versions that have been created : \n' +
+                     '\n'.join(self.versions), "green")
+
     def test(self):
-        print(' ------ Testing docker images ------ ')
+        self.display(' ------ Testing docker images ------ ', "normal")
 
         # For each version tests if the associated container exists
 
-        print('Versions that are supposed to exist : \n' +
-              '\n'.join(self.versions))
+        self.display('Versions that are supposed to exist : \n' +
+                     '\n'.join(self.versions), "blue")
         self.versions = list(filter(lambda version:
                                     self.exec('/'.join([self.root, 'bin', 'check_container.sh continuous:{}_{}'
-                                                        .format(self.runtime, version)]), False) == 0, self.versions))
-        print('Versions that really exist : \n' + '\n'.join(self.versions))
+                                                        .format(self.runtime, version)]), not self.verbose) == 0, self.versions))
+        self.display('Versions that really exist : \n' +
+                     '\n'.join(self.versions), "blue")
 
         self.init_directories()
         self.move_additional_files()
@@ -164,9 +194,9 @@ class App:
         if self.cmd in self.running_map:
             self.running_map[self.cmd]()
             if self.clean:
-                self.clean_directories()
+                self.clean_up_context()
         else:
-            raise Exception('Command is not handled')
+            raise Exception('This command is not handled')
 
 
 if __name__ == '__main__':
@@ -178,6 +208,8 @@ if __name__ == '__main__':
     parser.add_argument('--version', nargs='*', default='all',
                         type=str, help='List of versions to compile')
     parser.add_argument('--clean', dest='clean',
+                        action='store_const', const=True, default=False)
+    parser.add_argument('--verbose', dest='verbose',
                         action='store_const', const=True, default=False)
     args = parser.parse_args()
     context = App(args)
