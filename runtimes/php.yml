@@ -3,6 +3,8 @@ bats: true
 image: php
 versions:
   - generic
+  - 5.6-cli
+  - 7.0-cli
   - 7.1-cli
   - 7.2-cli
   - 7.3-cli
