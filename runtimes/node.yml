@@ -13,3 +13,4 @@ components:
   - npm_config
   - azure_cli
   - terraform
+  - entrypoint
