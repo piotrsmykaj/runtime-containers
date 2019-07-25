@@ -44,7 +44,7 @@ Each flavours have dedicated `.dtc` file
 
 The template must have the following functionality:
 - [x] File path replacement ( replacement of the file path by the build context )
-- [] Conditional statement of a runtime variable ( when runtime are build, I want condition the integration of the statement if variable condition are meet, like version of runtime php-7.1)
+- [ ] Conditional statement of a runtime variable ( when runtime are build, I want condition the integration of the statement if variable condition are meet, like version of runtime php-7.1)
 
 #### Additional files
 
