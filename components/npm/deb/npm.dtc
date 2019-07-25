@@ -1,0 +1,6 @@
+USER cphp
+RUN mkdir ~/n
+RUN npm config set prefix '~/n'
+ENV PATH=~/n/bin:$PATH
+RUN source ~/.profile
+USER root

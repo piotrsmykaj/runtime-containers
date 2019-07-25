@@ -1,0 +1,15 @@
+flavour: deb
+bats: true
+image: node
+versions:
+  - latest
+components:
+  - init_cphp_env
+  - init_cphp_package
+  - ssh_login_fix
+  - setting_cphp_user
+  - bootstrap_cphp_dep
+  - pip_and_coid
+  - npm
+  - azure_cli
+  - terraform

@@ -1,0 +1,20 @@
+flavour: deb
+bats: true
+image: php
+versions:
+  - generic
+  - 5.6-cli
+  - 7.0-cli
+  - 7.1-cli
+  - 7.2-cli
+  - 7.3-cli
+components:
+  - init_cphp_env
+  - init_cphp_package
+  - ssh_login_fix
+  - setting_cphp_user
+  - bootstrap_cphp_dep
+  - n
+  - pip_and_coid
+  - azure_cli
+  - terraform

@@ -1,3 +1,0 @@
-COPY files/scripts/bootstrap.sh /tmp/
-COPY files/.profile /home/cphp/.profile
-RUN /tmp/bootstrap.sh
