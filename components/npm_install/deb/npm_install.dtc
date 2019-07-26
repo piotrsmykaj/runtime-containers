@@ -1,1 +1,1 @@
-RUN apt-get install -y npm
+RUN apt-get update -y && apt-get install -y npm

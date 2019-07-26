@@ -1,7 +1,4 @@
-@test "awscli" {
-    aws --version
-    [ 0 -eq $? ]
-
-    pip list | grep awscli
-    [ 0 -eq $? ]
+@test "aws" {
+      pip3 show awscli
+      [ 0 -eq $? ]
 }

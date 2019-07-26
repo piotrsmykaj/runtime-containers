@@ -16,6 +16,7 @@ components:
   - bootstrap_cphp_dep
   - n
   - pip_and_coid
+  - aws
   - azure_cli
   - terraform
   - entrypoint

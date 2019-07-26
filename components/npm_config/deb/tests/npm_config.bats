@@ -1,5 +1,5 @@
 #!/usr/bin/env bats
 
-@test "npm" {
-
+@test "npm configuration" {
+      [ -d /home/cphp/n ]
 }

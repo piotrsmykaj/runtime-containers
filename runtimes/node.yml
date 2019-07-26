@@ -10,6 +10,7 @@ components:
   - setting_cphp_user
   - bootstrap_cphp_dep
   - pip_and_coid
+  - aws
   - npm_config
   - azure_cli
   - terraform
