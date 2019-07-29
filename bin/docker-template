@@ -147,7 +147,7 @@ class App:
             try:
                 self.display(
                     "Results of bats tests for version : "+version, "green")
-                self.exec('docker run -it -v {}/dockerfiles/{}_{}.bats:/test.bats bats_tests'.format(
+                self.exec('docker run --rm -it -v {}/dockerfiles/{}_{}.bats:/test.bats bats_tests'.format(
                     self.tmp, self.runtime, version), False)
             except Exception as e:
                 self.display('One or more bats tests failed', "red")

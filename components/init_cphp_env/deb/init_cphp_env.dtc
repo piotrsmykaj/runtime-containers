@@ -1,2 +1,0 @@
-ENV CONTINUOUSPHP continuousphp
-ENV TERM xterm
