@@ -16,3 +16,4 @@ components:
   - aws
   - azure_cli
   - terraform
+  - composer
