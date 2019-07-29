@@ -4,14 +4,10 @@ image: node
 versions:
   - latest
 components:
-  - init_cphp_env
-  - init_cphp_package
-  - ssh_login_fix
-  - setting_cphp_user
-  - bootstrap_cphp_dep
+  - entrypoint
+  - init_cphp
+  - n
   - pip_and_coid
   - aws
-  - npm_config
   - azure_cli
   - terraform
-  - entrypoint

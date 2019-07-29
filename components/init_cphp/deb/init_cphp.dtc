@@ -1,0 +1,27 @@
+ENV CONTINUOUSPHP continuousphp
+
+ADD files/init_cphp/01_nodoc /etc/dpkg/dpkg.cfg.d/
+ADD files/init_cphp/sudoer_cphp /etc/sudoers.d/cphp
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    apt-utils \
+    ca-certificates \
+    rpm \
+    zip \
+    unzip \
+    curl \
+    vim \
+    git \
+    build-essential \
+    sudo \
+    openssh-server \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN groupadd cphp && \
+    useradd -m -g cphp -p "$1$hDIpGJlN$OqzLQ9sxi9rBDi4GH7kid1" -s /bin/bash cphp && \
+    mkdir -p /home/cphp/var && \
+    chown cphp:cphp -R /home/cphp && \
+    echo -n "export CONTINUOUSPHP=continuousphp" > /etc/profile.d/cphp.sh
+
+USER cphp
+WORKDIR /home/cphp

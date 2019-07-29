@@ -1,7 +1,5 @@
-
-
 COPY files/entrypoint/entrypoint.sh /
-ENV SSH_AUTH_SOCK /home/cphp/cphp_ssh_agent
-ENTRYPOINT ["/bin/bash", "entrypoint.sh"]
+ENV SSH_AUTH_SOCK /tmp/ssh-agent.socket
+ENTRYPOINT ["/bin/bash", "/entrypoint.sh"]
 
 CMD ["sleep", "infinity"]

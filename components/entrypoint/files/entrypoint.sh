@@ -3,9 +3,7 @@
 # In other words : traps SIGINT and SIGTERM signals and forwards them to the child process as SIGTERM signals
 
 before() {
-    if [ ! -z "$BASTION_IP" ]; then
-	envsubst < /root/.ssh/config.dist >> /root/.ssh/config
-    fi
+  ssh-agent -a /tmp/ssh-agent.socket
 }
 
 asyncRun() {
@@ -24,7 +22,6 @@ before
 
 if [ "sleep" = "$1" ]; then
     # Interactive with trap
-    ssh-agent -a /home/cphp/cphp_ssh_agent
     asyncRun $@
 else
     exec "$@"

@@ -1,3 +1,3 @@
 @test "entrypoint" {
-      [ "${SSH_AUTH_SOCK}" = "/home/cphp/cphp_ssh_agent" ]
+      [ "${SSH_AUTH_SOCK}" = "/tmp/ssh-agent.socket" ]
 }

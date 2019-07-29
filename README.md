@@ -22,13 +22,10 @@ Architecture:
 
   2. Runtimes:
       Runtime represents a platform around the same application goal (Language) like `php`, `javascript`, `ruby`, `python`.
-      Docker Template:
-        The 
 
   3. Flavours:
       A Flavour represent a docker image distribution like debian, alpine, centos...
       A Component will integrate a dedicated script for each flavour.
-
 
 ## Component
 
@@ -60,17 +57,64 @@ The configuration must have the following functionality:
 2. flavours parsing to know witch flavour of components must be included
 3. list of components to includes
 
-### Runtime Tests
+## Getting Started
 
-The tests bats must be build based on each runtime build, use template like this
+In order to use the binary `bin/docker-template`.
+You have to install theses python dependencies:
 
 ```
-FROM %continuous:runtime-version
-USER root
-RUN apt-get update && apt-get install -y git
-RUN git clone https://github.com/bats-core/bats-core /tmp/bats-core \
-    && cd /tmp/bats-core \
-    && ./install.sh /usr/local
-CMD [ "bats", "/test.bats" ]
+❯ pip3 install pyyaml
+❯ ./bin/docker-template --help                                                                                                                          runtime-containers/git/feature/default_ssh_agent !+
+usage: docker-template [-h] [--runtime [RUNTIME]]
+                       [--version [VERSION [VERSION ...]]] [--clean]
+                       [--verbose] [--replace]
+                       [{build,test}]
+
+Continuous runtime container generator
+
+positional arguments:
+  {build,test}          Command
+
+optional arguments:
+  -h, --help            show this help message and exit
+  --runtime [RUNTIME]   Runtime
+  --version [VERSION [VERSION ...]]
+                        List of versions to compile
+  --clean               Remove all temporary files
+  --verbose             Print the entire output
+  --replace             Rebuild existing images
 ```
 
+### Build Runtime
+
+```
+❯ ./bin/docker-template build --runtime php --version 7.3-cli --verbose
+Step 8/8 : CMD [ "bats", "test.bats" ]
+ ---> Running in 43ecc0b370b5
+Removing intermediate container 43ecc0b370b5
+ ---> b4d43d928f3c
+Successfully built b4d43d928f3c
+Successfully tagged bats_tests:latest
+ Results of bats tests for version : 7.3-cli
+ 
+SSH_AUTH_SOCK=/tmp/ssh-agent.socket; export SSH_AUTH_SOCK;
+SSH_AGENT_PID=7; export SSH_AGENT_PID;
+echo Agent pid 7;
+ ✓ init_cphp_env
+ ✓ init_cphp_package
+ ✓ ssh_login_fix
+ ✓ setting_cphp_user
+ ✓ bootstrap_cphp_env
+ ✓ n
+ ✓ pip_and_coid
+ ✓ aws
+ ✓ azure - command line
+ ✓ terraform
+ ✓ entrypoint
+
+11 tests, 0 failures
+
+Untagged: bats_tests:latest
+ Versions that have been created :
+7.3-cli
+```
