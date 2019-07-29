@@ -1,0 +1,2 @@
+RUN curl -Ss https://getcomposer.org/composer.phar -o /usr/local/bin/composer && \
+    chmod +x /usr/local/bin/composer
