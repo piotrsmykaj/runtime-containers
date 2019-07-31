@@ -3,7 +3,7 @@
 # In other words : traps SIGINT and SIGTERM signals and forwards them to the child process as SIGTERM signals
 
 before() {
-  ssh-agent -a /tmp/ssh-agent.socket
+  su - cphp -c 'ssh-agent -a /tmp/ssh-agent.socket'
 }
 
 asyncRun() {
