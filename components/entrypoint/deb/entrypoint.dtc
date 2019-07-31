@@ -1,5 +1,5 @@
 COPY files/entrypoint/entrypoint.sh /
 ENV SSH_AUTH_SOCK /tmp/ssh-agent.socket
 ENTRYPOINT ["/bin/bash", "/entrypoint.sh"]
-
+RUN echo -n "export SSH_AUTH_SOCK=/tmp/ssh-agent.socket" > /etc/profile.d/ssh-agent.sh
 CMD ["sleep", "infinity"]
