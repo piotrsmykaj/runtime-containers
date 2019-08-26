@@ -11,6 +11,7 @@ versions:
   - 7.3-fpm
 components:
   - entrypoint
+  - php_modules
   - init_cphp
   - n
   - pip_and_coid

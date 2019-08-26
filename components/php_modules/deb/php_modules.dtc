@@ -1,0 +1,13 @@
+RUN apt-get update -y && \
+    apt-get install -y libpspell-dev librabbitmq-dev libbz2-dev libenchant-dev libwebp-dev libjpeg-dev libpng-dev libz-dev \
+    libgmp-dev libc-client-dev libkrb5-dev libicu-dev libldap2-dev libmemcached-dev libpq-dev  \
+    librecode-dev libsnmp-dev libxml2-dev libtidy-dev libxslt-dev
+
+RUN pecl install amqp apcu ast memcached mongodb redis xdebug
+
+RUN docker-php-ext-configure imap --with-kerberos --with-imap-ssl && \
+    docker-php-ext-install bcmath bz2 calendar dba enchant exif gd gettext gmp imap intl ldap mysqli pcntl pdo_mysql \
+    pdo_pgsql pgsql pspell recode shmop snmp soap sockets sysvmsg sysvsem sysvshm tidy xmlrpc xsl zend_test zip && \
+    docker-php-ext-enable amqp.so ast.so apcu.so memcached.so mongodb.so redis.so xdebug.so
+
+
