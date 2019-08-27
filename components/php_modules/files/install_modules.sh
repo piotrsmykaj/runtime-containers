@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 echo "Updating apt"
 apt-get update -y
@@ -15,8 +15,16 @@ echo "Using docker-php-ext-configure"
 docker-php-ext-configure imap --with-kerberos --with-imap-ssl
 
 echo "Using docker-php-ext-install"
+
+ln -s /usr/lib/x86_64-linux-gnu/libldap.so /usr/lib/libldap.so
+
 docker-php-ext-install bcmath bz2 calendar dba enchant exif gd gettext gmp imap intl ldap mysqli pcntl pdo_mysql \
     pdo_pgsql pgsql pspell recode shmop snmp soap sockets sysvmsg sysvsem sysvshm tidy xmlrpc xsl zip
+if [[ "$PHP_VERSION" == "7.1.30" ]]; then
+    apt-get install -y libsodium-dev
+    pecl install -f libsodium
+    docker-php-ext-enable sodium
+fi
 
 echo "Using docker-php-ext-enable"
 docker-php-ext-enable amqp.so ast.so apcu.so memcached.so mongodb.so redis.so xdebug.so
