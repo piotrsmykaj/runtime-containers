@@ -31,6 +31,7 @@
       php -m | grep mongodb
       php -m | grep mysqli
       php -m | grep mysqlnd
+      php -m | grep oci8
       php -m | grep openssl
       php -m | grep pcntl
       php -m | grep pcre

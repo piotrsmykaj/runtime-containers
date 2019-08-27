@@ -27,6 +27,11 @@
     dpkg-query -l openssh-server
     [ 0 -eq $? ]
     [ -f /etc/dpkg/dpkg.cfg.d/01_nodoc ]
+    which nc
+    [ 0 -eq $? ]
+    which envsubst
+    [ 0 -eq $? ]
+
 }
 
 @test "setting_cphp_user" {

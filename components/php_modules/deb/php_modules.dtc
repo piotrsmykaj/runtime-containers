@@ -1,3 +1,5 @@
+USER root
+
 RUN apt-get update -y && \
     apt-get install -y libpspell-dev librabbitmq-dev libbz2-dev libenchant-dev libwebp-dev libjpeg-dev libpng-dev libz-dev \
     libgmp-dev libc-client-dev libkrb5-dev libicu-dev libldap2-dev libmemcached-dev libpq-dev  \
@@ -10,4 +12,17 @@ RUN docker-php-ext-configure imap --with-kerberos --with-imap-ssl && \
     pdo_pgsql pgsql pspell recode shmop snmp soap sockets sysvmsg sysvsem sysvshm tidy xmlrpc xsl zend_test zip && \
     docker-php-ext-enable amqp.so ast.so apcu.so memcached.so mongodb.so redis.so xdebug.so
 
+RUN mkdir /oracle_client
 
+ADD files/php_modules /oracle_client/
+
+WORKDIR /oracle_client/
+
+RUN unzip instantclient-basic-linux.x64-19.3.0.0.0dbru.zip && unzip instantclient-sdk-linux.x64-19.3.0.0.0dbru.zip && \
+    echo /oracle_client/instantclient_19_3 > /etc/ld.so.conf.d/oracle-instantclient.conf && ldconfig && \
+    apt-get install build-essential libaio1
+
+RUN echo "instantclient,/oracle_client/instantclient_19_3" | pecl install oci8 && docker-php-ext-
+
+USER cphp
+WORKDIR /home/cphp
