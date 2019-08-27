@@ -20,9 +20,9 @@ WORKDIR /oracle_client/
 
 RUN unzip instantclient-basic-linux.x64-19.3.0.0.0dbru.zip && unzip instantclient-sdk-linux.x64-19.3.0.0.0dbru.zip && \
     echo /oracle_client/instantclient_19_3 > /etc/ld.so.conf.d/oracle-instantclient.conf && ldconfig && \
-    apt-get install build-essential libaio1
+    apt-get install -y build-essential libaio1
 
-RUN echo "instantclient,/oracle_client/instantclient_19_3" | pecl install oci8 && docker-php-ext-
+RUN echo "instantclient,/oracle_client/instantclient_19_3" | pecl install oci8 && docker-php-ext-enable oci8.so
 
 USER cphp
 WORKDIR /home/cphp

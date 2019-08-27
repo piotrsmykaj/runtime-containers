@@ -27,9 +27,9 @@
     dpkg-query -l openssh-server
     [ 0 -eq $? ]
     [ -f /etc/dpkg/dpkg.cfg.d/01_nodoc ]
-    which nc
+    dpkg-query -l netcat
     [ 0 -eq $? ]
-    which envsubst
+    dpkg-query -l gettext
     [ 0 -eq $? ]
 
 }
