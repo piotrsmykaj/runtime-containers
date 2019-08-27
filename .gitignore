@@ -2,3 +2,5 @@
 .idea
 debian
 todo.org
+components/php_modules/files/instantclient-basic-linux.x64-19.3.0.0.0dbru.zip
+components/php_modules/files/instantclient-sdk-linux.x64-19.3.0.0.0dbru.zip
