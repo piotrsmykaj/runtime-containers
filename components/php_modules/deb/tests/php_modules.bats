@@ -60,7 +60,6 @@
       php -m | grep sysvmsg
       php -m | grep sysvsem
       php -m | grep sysvshm
-      php -m | grep test
       php -m | grep tidy
       php -m | grep tokenizer
       php -m | grep xdebug
