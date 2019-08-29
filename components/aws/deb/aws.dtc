@@ -1,1 +1,2 @@
-RUN pip3 install awscli
+RUN pip3 install awscli \
+    && rm -rf /var/lib/apt/lists/*

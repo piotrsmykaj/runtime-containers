@@ -27,6 +27,11 @@
     dpkg-query -l openssh-server
     [ 0 -eq $? ]
     [ -f /etc/dpkg/dpkg.cfg.d/01_nodoc ]
+    dpkg-query -l netcat
+    [ 0 -eq $? ]
+    dpkg-query -l gettext
+    [ 0 -eq $? ]
+
 }
 
 @test "setting_cphp_user" {
