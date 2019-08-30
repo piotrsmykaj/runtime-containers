@@ -2,7 +2,7 @@ flavour: deb
 bats: true
 image: node
 versions:
-  - latest
+  - 12.9.0
 components:
   - entrypoint
   - init_cphp
