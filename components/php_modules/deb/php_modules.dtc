@@ -5,5 +5,4 @@ ADD files/php_modules/install_modules.sh .
 RUN chmod +x ./install_modules.sh && ./install_modules.sh \
     && rm -rf /var/lib/apt/lists/*
 
-USER cphp
 WORKDIR /home/cphp
