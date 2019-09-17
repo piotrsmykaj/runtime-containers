@@ -88,14 +88,14 @@ optional arguments:
 ### Build Runtime
 
 ```
-❯ ./bin/docker-template build --runtime php --version 7.3-cli --verbose
+❯ ./bin/docker-template build --runtime php --version 7.3.8-fpm --verbose
 Step 8/8 : CMD [ "bats", "test.bats" ]
  ---> Running in 43ecc0b370b5
 Removing intermediate container 43ecc0b370b5
  ---> b4d43d928f3c
 Successfully built b4d43d928f3c
 Successfully tagged bats_tests:latest
- Results of bats tests for version : 7.3-cli
+ Results of bats tests for version : 7.3.8-fpm
  
 SSH_AUTH_SOCK=/tmp/ssh-agent.socket; export SSH_AUTH_SOCK;
 SSH_AGENT_PID=7; export SSH_AGENT_PID;
