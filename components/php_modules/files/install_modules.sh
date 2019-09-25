@@ -6,7 +6,7 @@ apt-get update -y
 echo "Installing libraries"
 apt-get install -y libpspell-dev librabbitmq-dev libbz2-dev libenchant-dev libwebp-dev libjpeg-dev libpng-dev libz-dev \
     libgmp-dev libc-client-dev libkrb5-dev libicu-dev libldap2-dev libmemcached-dev libpq-dev  \
-    librecode-dev libsnmp-dev libxml2-dev libtidy-dev libxslt-dev
+    librecode-dev libxml2-dev libtidy-dev libxslt-dev
 
 echo "Using pecl for some extensions"
 pecl install amqp apcu ast memcached mongodb redis xdebug
@@ -19,7 +19,7 @@ echo "Using docker-php-ext-install"
 ln -s /usr/lib/x86_64-linux-gnu/libldap.so /usr/lib/libldap.so
 
 docker-php-ext-install bcmath bz2 calendar dba enchant exif gd gettext gmp imap intl ldap mysqli pcntl pdo_mysql \
-    pdo_pgsql pgsql pspell recode shmop snmp soap sockets sysvmsg sysvsem sysvshm tidy xmlrpc xsl zip
+    pdo_pgsql pgsql pspell recode shmop soap sockets sysvmsg sysvsem sysvshm tidy xmlrpc xsl zip
 if [[ "$PHP_VERSION" < "7.1.40" ]]; then
     apt-get install -y libsodium-dev
     pecl install -f libsodium

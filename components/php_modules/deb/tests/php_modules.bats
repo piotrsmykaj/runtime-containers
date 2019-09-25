@@ -50,7 +50,6 @@
       php -m | grep session
       php -m | grep shmop
       php -m | grep SimpleXML
-      php -m | grep snmp
       php -m | grep soap
       php -m | grep sockets
       php -m | grep sodium
