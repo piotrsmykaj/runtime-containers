@@ -31,7 +31,6 @@
     [ 0 -eq $? ]
     dpkg-query -l gettext
     [ 0 -eq $? ]
-
 }
 
 @test "setting_cphp_user" {
@@ -42,3 +41,14 @@
   [ -d /home/cphp/var ]
   [ -f /etc/profile.d/cphp.sh ]
 }
+
+@test "mysql_client" {
+  mysql --version
+  [ 0 -eq $? ]
+}
+
+@test "psql_client" {
+  psql --version
+  [ 0 -eq $? ]
+}
+
