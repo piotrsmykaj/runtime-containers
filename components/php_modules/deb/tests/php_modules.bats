@@ -1,8 +1,16 @@
+php_version=$(php -v | head -n 1 | awk '{print $2}')
+
+@test "php-modules < 7.4" {
+  if [[ "$php_version" > "7.3.99" ]]; then
+    skip
+  fi
+  php -m | grep recode
+}
+
 @test "php-modules" {
       php -m | grep amqp
       php -m | grep apcu
       php -m | grep ast
-      php -m | grep bcmath
       php -m | grep bz2
       php -m | grep calendar
       php -m | grep Core
@@ -44,7 +52,6 @@
       php -m | grep posix
       php -m | grep pspell
       php -m | grep readline
-      php -m | grep recode
       php -m | grep redis
       php -m | grep Reflection
       php -m | grep session

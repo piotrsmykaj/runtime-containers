@@ -62,7 +62,8 @@ class App:
         else:
             """ Display outputs into the shell """
             output = subprocess.run(cmd.split(' '), capture_output=False)
-        return output.returncode
+        if 0 != output.returncode:
+            raise Exception('ERROR');
 
     def clean_up_context(self):
         """ Clean up temporary files """
@@ -73,10 +74,14 @@ class App:
 
     def init_directories(self):
         """ Create necessary directories for command execution """
-        self.clean_up_context()
-        os.mkdir(self.tmp)
-        os.mkdir(self.files)
-        os.mkdir(self.dockerfiles)
+        if self.clean:
+            self.clean_up_context()
+        if os.path.exists(self.tmp) is False:
+          os.mkdir(self.tmp)
+        if os.path.exists(self.files) is False:
+          os.mkdir(self.files)
+        if os.path.exists(self.dockerfiles) is False:
+          os.mkdir(self.dockerfiles)
 
     def move_additional_files(self):
         """ Place files that are called by ADD or COPY in Dockerfile """
@@ -84,7 +89,8 @@ class App:
             src = '/'.join([self.components, component, 'files'])
             if os.path.exists(src):
                 dst = '/'.join([self.files, component])
-                os.mkdir(dst)
+                if os.path.exists(dst) is False:
+                    os.mkdir(dst)
                 for item in os.listdir(src):
                     obj = os.path.join(src, item)
                     res = os.path.join(dst, item)

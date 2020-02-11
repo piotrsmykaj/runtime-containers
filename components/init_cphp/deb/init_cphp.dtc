@@ -3,7 +3,10 @@ ENV CONTINUOUSPHP continuousphp
 ADD files/init_cphp/01_nodoc /etc/dpkg/dpkg.cfg.d/
 ADD files/init_cphp/sudoer_cphp /etc/sudoers.d/cphp
 
-RUN apt-get update && apt-get install -y --no-install-recommends \
+# FIX missing directory causing trouble with slim container
+RUN for i in $(seq 1 8); do mkdir -p "/usr/share/man/man${i}"; done
+
+RUN apt-get update && apt-get upgrade -y && apt-get install -y \
     apt-utils \
     ca-certificates \
     rpm \
@@ -21,7 +24,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     wget \
     default-mysql-client \
     postgresql-client \
-    && rm -rf /var/lib/apt/lists/*
+    && rm -rf /var/lib/apt/lists/* \
+    && apt-get autoremove --purge -y && apt-get autoclean -y && apt-get clean -y \
+    && rm -rf /var/lib/apt/lists/* \
+    && rm -rf /tmp/* /var/tmp/*
 
 RUN groupadd cphp && \
     useradd -m -g cphp -p "$1$hDIpGJlN$OqzLQ9sxi9rBDi4GH7kid1" -s /bin/bash cphp && \
