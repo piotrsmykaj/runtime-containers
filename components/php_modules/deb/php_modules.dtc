@@ -32,6 +32,8 @@ RUN apt-get update && apt-get upgrade -y \
 RUN docker-php-ext-configure zip \
     && PHP_OPENSSL=yes docker-php-ext-configure imap --with-kerberos --with-imap-ssl
 
+RUN docker-php-ext-configure gd --with-freetype-dir=/usr/include/ --with-jpeg-dir=/usr/include/
+
 RUN ln -s /usr/lib/x86_64-linux-gnu/libldap.so /usr/lib/libldap.so
 
 RUN docker-php-ext-install \
