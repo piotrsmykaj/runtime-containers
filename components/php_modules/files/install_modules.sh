@@ -18,8 +18,7 @@ if [[ "$PHP_VERSION" < "7.4.0" ]]; then
   docker-php-ext-configure gd --with-freetype-dir=/usr/include/ --with-jpeg-dir=/usr/include/ && docker-php-ext-install gd
 fi
 
-if [[ "$PHP_VERSION" -ge "7.4.0" ]]; then
-  docker-php-ext-install recode
+if [[ "$PHP_VERSION" < "7.3.99" ]]; then
   docker-php-ext-configure gd --with-freetype=/usr/include/ --with-jpeg=/usr/include/ && docker-php-ext-install gd
 fi
 
