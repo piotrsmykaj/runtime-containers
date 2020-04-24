@@ -36,7 +36,7 @@ RUN docker-php-ext-configure zip \
 RUN ln -s /usr/lib/x86_64-linux-gnu/libldap.so /usr/lib/libldap.so
 
 RUN docker-php-ext-install \
-    bcmath bz2 calendar dba enchant exif gd gettext gmp imap intl ldap mysqli pcntl pdo_mysql \
+    bcmath bz2 calendar dba enchant exif gettext gmp imap intl ldap mysqli pcntl pdo_mysql \
     pdo_pgsql pgsql pspell shmop soap sockets sysvmsg sysvsem sysvshm tidy xmlrpc xsl zip
 
 ADD files/php_modules/install_modules.sh .
