@@ -70,4 +70,5 @@ php_version=$(php -v | head -n 1 | awk '{print $2}')
       php -m | grep tokenizer
       php -m | grep xdebug
       php -m | grep xml
+      php -m | grep mailparse
 }
