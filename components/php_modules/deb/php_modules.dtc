@@ -58,7 +58,7 @@ RUN ldconfig \
     && docker-php-ext-enable oci8.so
 
 # Using pecl for some extensions
-RUN pecl install amqp apcu ast memcached mongodb redis \
-    && docker-php-ext-enable amqp.so ast.so apcu.so memcached.so mongodb.so redis.so
+RUN pecl install amqp apcu ast memcached mongodb redis mailparse \
+    && docker-php-ext-enable amqp.so ast.so apcu.so memcached.so mongodb.so redis.so mailparse.so
 
 WORKDIR /home/cphp
