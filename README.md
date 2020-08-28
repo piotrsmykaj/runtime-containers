@@ -118,3 +118,11 @@ Untagged: bats_tests:latest
  Versions that have been created :
 7.3-cli
 ```
+
+
+### Known issues
+> always add the --replace flag to the build command when you don't have any image locally, otherwise the program will check for an existing image then fail:
+
+```bash
+./bin/docker-template build --runtime php --version 7.0.33-fpm  --replace
+```
