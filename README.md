@@ -61,6 +61,17 @@ The configuration must have the following functionality:
 
 In order to use the binary `bin/docker-template`.
 You have to install theses python dependencies:
+*At least python 3.8 is required*
+
+```bash
+sudo yum install libssl-dev openssl
+wget https://www.python.org/ftp/python/3.8.1/Python-3.8.1.tgz
+tar xzvf Python-3.8.1.tgz
+cd Python-3.8.1
+./configure
+make
+sudo make install
+```
 
 ```
 ❯ pip3 install pyyaml
