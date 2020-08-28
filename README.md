@@ -3,7 +3,7 @@
 </a>
 
 <p align="left">
-  <a href="https://continuousphp.com/git-hub/continuousphp/runtime-container"><img alt="Build Status" src="https://status.continuousphp.com/git-hub/continuousphp/cli?token=8eb1b41e-343a-41b5-b68f-179fb1ce1ffe&branch=master" /></a>
+  <a href="https://continuousphp.com/git-hub/continuousphp/runtime-containers"><img alt="Build Status" src="https://status.continuousphp.com/git-hub/continuousphp/cli?token=8eb1b41e-343a-41b5-b68f-179fb1ce1ffe&branch=master" /></a>
 </p>
 
 <p align="left">
@@ -61,6 +61,17 @@ The configuration must have the following functionality:
 
 In order to use the binary `bin/docker-template`.
 You have to install theses python dependencies:
+*At least python 3.8 is required*
+
+```bash
+sudo yum install libssl-dev openssl
+wget https://www.python.org/ftp/python/3.8.1/Python-3.8.1.tgz
+tar xzvf Python-3.8.1.tgz
+cd Python-3.8.1
+./configure
+make
+sudo make install
+```
 
 ```
 ❯ pip3 install pyyaml
