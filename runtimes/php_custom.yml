@@ -1,0 +1,16 @@
+flavour: deb
+bats: true
+image: devilbox/php-fpm
+versions:
+  - 5.6-base
+components:
+  - entrypoint
+  - init_cphp
+  - n
+  - pip_and_coid
+  - ansible
+  - aws
+  - azure_cli
+  - terraform
+  - composer
+  - php_modules

@@ -7,12 +7,13 @@ from shutil import copy2, copytree, rmtree
 import subprocess
 import sys
 import yaml
-
+from pathlib import Path
+from ansible.plugins.test.core import version_compare
+from jinja2 import Environment, FileSystemLoader
 
 class App:
 
     def __init__(self, args):
-
         self.root = '/'.join([os.path.dirname(os.path.realpath(__file__)), '..'])
         self.batsimage = '/'.join([self.root, 'bats', 'batsimage.d'])
         self.logs = '/'.join([self.root, 'bin', 'logs.txt'])
@@ -63,6 +64,7 @@ class App:
             """ Display outputs into the shell """
             output = subprocess.run(cmd.split(' '), capture_output=False)
         if 0 != output.returncode:
+            print(output)
             raise Exception('ERROR');
 
     def clean_up_context(self):
@@ -110,10 +112,18 @@ class App:
                     base = '{}:{}'.format(self.template['image'], version)
                 dockerfile.write('FROM '+base+'\n')
                 for component in self.template['components']:
-                    component_file = '/'.join([self.components,
-                                               component, self.template['flavour'], component+'.dtc'])
-                    dockerfile.write(
-                        open(component_file, 'r').read()+'\n')
+                    component_path = '/'.join([self.components, component, self.template['flavour']])
+                    if (component == "php_modules"):
+                        j2_env = Environment(loader=FileSystemLoader(component_path), trim_blocks=True)
+                        j2_env.filters['version'] = version_compare
+                        component_content = j2_env.get_template(component+'.j2').render(PHP_VERSION=version)
+                        with open(component_path + '/' + component +'.dtc', 'w') as f:
+                           f.write(component_content)
+                        component_file = '/'.join([self.components, component, self.template['flavour'], component+'.dtc'])
+                        dockerfile.write(open(component_file, 'r').read()+'\n')
+                    else:
+                        component_file = '/'.join([self.components, component, self.template['flavour'], component+'.dtc'])
+                        dockerfile.write(open(component_file, 'r').read()+'\n')
 
     def generate_runtime_container(self):
         """ Create a container for each version of specified runtime """
@@ -191,7 +201,7 @@ class App:
 
         self.display('Versions that are supposed to exist : \n' +
                      '\n'.join(self.versions), "blue")
-
+        
         self.versions = list(filter(lambda version:
                                     self.exec('/'.join([self.root, 'bin', 'check_container.sh continuous:{}_{}'
                                                         .format(self.runtime, version)]), not self.verbose) == 0, self.versions))
