@@ -50,6 +50,7 @@ run_copy_build_package() {
 run_build() {
   runtime=$1
   version=$2
+  pip3 install ansible
   exec_builder "cd /usr/local/runtime-containers/$CPHP_BUILD_ID; ./bin/docker-template build --runtime $runtime --version $version --verbose --replace" || return 1
   return 0
 }
