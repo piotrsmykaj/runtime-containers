@@ -44,7 +44,6 @@ run_copy_build_package() {
   tar czf /tmp/build.tar.gz .
   exec_builder "mkdir /usr/local/runtime-containers/$CPHP_BUILD_ID"
   scp -i $AWS_SSH_KEY /tmp/build.tar.gz ec2-user@$EC2_IP:/usr/local/runtime-containers/$CPHP_BUILD_ID || exit 1
-  pip3 install ansible
   exec_builder "cd /usr/local/runtime-containers/$CPHP_BUILD_ID; tar xzf build.tar.gz" || exit 1
 }
 
@@ -58,6 +57,7 @@ run_build() {
 run_test() {
   runtime=$1
   version=$2
+  pip3 install ansible
   exec_builder "cd /usr/local/runtime-containers/$CPHP_BUILD_ID && ./bin/docker-template test --runtime $runtime --version $version --verbose" || return 1
   return 0
 }
