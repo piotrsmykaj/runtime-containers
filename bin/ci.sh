@@ -27,7 +27,6 @@ start_builder() {
       echo "EC2 Runtime Builder IP: $ip"
       break
     fi
-
     aws ec2 start-instances --instance-ids $AWS_RUNTIME_EC2_ID
     sleep 20
   done
@@ -35,7 +34,6 @@ start_builder() {
 
 exec_builder() {
   ssh -t -i $AWS_SSH_KEY ec2-user@$EC2_IP "$1"
-  pip2 install ansible
   return $?
 }
 
@@ -51,15 +49,14 @@ run_copy_build_package() {
 run_build() {
   runtime=$1
   version=$2
-  exec_builder "cd /usr/local/runtime-containers/$CPHP_BUILD_ID; ./bin/docker-template build --runtime $runtime --version $version --verbose --replace" || return 1
+  exec_builder "cd /usr/local/runtime-containers/$CPHP_BUILD_ID && pip install ansible && ./bin/docker-template build --runtime $runtime --version $version --verbose --replace" || return 1
   return 0
 }
 
 run_test() {
   runtime=$1
   version=$2
-  pip2 install ansible
-  exec_builder "cd /usr/local/runtime-containers/$CPHP_BUILD_ID && ./bin/docker-template test --runtime $runtime --version $version --verbose" || return 1
+  exec_builder "cd /usr/local/runtime-containers/$CPHP_BUILD_ID && pip install ansible && ./bin/docker-template test --runtime $runtime --version $version --verbose" || return 1
   return 0
 }
 
