@@ -35,6 +35,7 @@ start_builder() {
 
 exec_builder() {
   ssh -t -i $AWS_SSH_KEY ec2-user@$EC2_IP "$1"
+  pip install ansible
   return $?
 }
 
