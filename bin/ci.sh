@@ -35,7 +35,6 @@ start_builder() {
 
 exec_builder() {
   ssh -t -i $AWS_SSH_KEY ec2-user@$EC2_IP "$1"
-  pip install ansible
   return $?
 }
 
@@ -45,6 +44,7 @@ run_copy_build_package() {
   tar czf /tmp/build.tar.gz .
   exec_builder "mkdir /usr/local/runtime-containers/$CPHP_BUILD_ID"
   scp -i $AWS_SSH_KEY /tmp/build.tar.gz ec2-user@$EC2_IP:/usr/local/runtime-containers/$CPHP_BUILD_ID || exit 1
+  pip3 install ansible
   exec_builder "cd /usr/local/runtime-containers/$CPHP_BUILD_ID; tar xzf build.tar.gz" || exit 1
 }
 
