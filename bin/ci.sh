@@ -33,7 +33,6 @@ start_builder() {
 }
 
 exec_builder() {
-  cat $AWS_SSH_KEY
   ssh -t -i $AWS_SSH_KEY ec2-user@$EC2_IP "$1"
   return $?
 }
@@ -43,6 +42,7 @@ run_copy_build_package() {
   rm -rf .git
   tar czf /tmp/build.tar.gz .
   exec_builder "mkdir /usr/local/runtime-containers/$CPHP_BUILD_ID"
+  cat $AWS_SSH_KEY
   scp -i $AWS_SSH_KEY /tmp/build.tar.gz ec2-user@$EC2_IP:/usr/local/runtime-containers/$CPHP_BUILD_ID || exit 1
   exec_builder "cd /usr/local/runtime-containers/$CPHP_BUILD_ID; tar xzf build.tar.gz" || exit 1
 }
@@ -50,7 +50,6 @@ run_copy_build_package() {
 run_build() {
   runtime=$1
   version=$2
-  python3 --version
   exec_builder "cd /usr/local/runtime-containers/$CPHP_BUILD_ID ; ./bin/docker-template build --runtime $runtime --version $version --verbose --replace" || return 1
   return 0
 }
@@ -58,7 +57,6 @@ run_build() {
 run_test() {
   runtime=$1
   version=$2
-  python3 --version
   exec_builder "cd /usr/local/runtime-containers/$CPHP_BUILD_ID ; ./bin/docker-template test --runtime $runtime --version $version --verbose" || return 1
   return 0
 }
