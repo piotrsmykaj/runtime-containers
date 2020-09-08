@@ -49,14 +49,14 @@ run_copy_build_package() {
 run_build() {
   runtime=$1
   version=$2
-  exec_builder "cd /usr/local/runtime-containers/$CPHP_BUILD_ID && pip install ansible && ./bin/docker-template build --runtime $runtime --version $version --verbose --replace" || return 1
+  exec_builder "cd /usr/local/runtime-containers/$CPHP_BUILD_ID && pip3 install ansible && ./bin/docker-template build --runtime $runtime --version $version --verbose --replace" || return 1
   return 0
 }
 
 run_test() {
   runtime=$1
   version=$2
-  exec_builder "cd /usr/local/runtime-containers/$CPHP_BUILD_ID && pip install ansible && ./bin/docker-template test --runtime $runtime --version $version --verbose" || return 1
+  exec_builder "cd /usr/local/runtime-containers/$CPHP_BUILD_ID && pip3 install ansible && ./bin/docker-template test --runtime $runtime --version $version --verbose" || return 1
   return 0
 }
 
