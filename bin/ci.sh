@@ -50,7 +50,7 @@ run_build() {
   runtime=$1
   version=$2
   python3 --version
-  exec_builder "cd /usr/local/runtime-containers/$CPHP_BUILD_ID ; python3 ./bin/docker-template build --runtime $runtime --version $version --verbose --replace" || return 1
+  exec_builder "cd /usr/local/runtime-containers/$CPHP_BUILD_ID ; PYTHONUSERBASE=/home/ec2-user/.local python3 ./bin/docker-template build --runtime $runtime --version $version --verbose --replace" || return 1
   return 0
 }
 
@@ -58,7 +58,7 @@ run_test() {
   runtime=$1
   version=$2
   python3 --version
-  exec_builder "cd /usr/local/runtime-containers/$CPHP_BUILD_ID ; python3 ./bin/docker-template test --runtime $runtime --version $version --verbose" || return 1
+  exec_builder "cd /usr/local/runtime-containers/$CPHP_BUILD_ID ; PYTHONUSERBASE=/home/ec2-user/.local python3 ./bin/docker-template test --runtime $runtime --version $version --verbose" || return 1
   return 0
 }
 
