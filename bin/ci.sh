@@ -42,7 +42,6 @@ run_copy_build_package() {
   rm -rf .git
   tar czf /tmp/build.tar.gz .
   exec_builder "mkdir /usr/local/runtime-containers/$CPHP_BUILD_ID"
-  cat $AWS_SSH_KEY
   scp -i $AWS_SSH_KEY /tmp/build.tar.gz ec2-user@$EC2_IP:/usr/local/runtime-containers/$CPHP_BUILD_ID || exit 1
   exec_builder "cd /usr/local/runtime-containers/$CPHP_BUILD_ID; tar xzf build.tar.gz" || exit 1
 }
