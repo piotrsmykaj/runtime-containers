@@ -64,8 +64,7 @@ class App:
             """ Display outputs into the shell """
             output = subprocess.run(cmd.split(' '), capture_output=False)
         if 0 != output.returncode:
-            print(output)
-            raise Exception('ERROR');
+            raise Exception(output);
 
     def clean_up_context(self):
         """ Clean up temporary files """
