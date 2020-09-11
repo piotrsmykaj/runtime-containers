@@ -1,6 +1,6 @@
 USER root
 
-# Installing libraries
+# Installing generic system libraries
 RUN apt-get update && apt-get upgrade -y \
     && apt-get install -y \
     build-essential libaio1 \
@@ -25,23 +25,60 @@ RUN apt-get update && apt-get upgrade -y \
     libtidy-dev \
     libxslt-dev \
     libzip-dev \
+    libsodium-dev \
     && apt-get autoremove --purge -y && apt-get autoclean -y && apt-get clean -y \
     && rm -rf /var/lib/apt/lists/* \
     && rm -rf /tmp/* /var/tmp/*
 
+
+
+{% if PHP_VERSION | version('7.1.40', '<') and PHP_VERSION | version('7.0.0', '>')%}
+# Libsodium for PHP 7.0.0...7.1.40
+RUN pecl install -f libsodium && docker-php-ext-enable sodium
+{% endif %}
+
+{% if PHP_VERSION | version('7.1.0', '<') and PHP_VERSION | version('7.0.0', '>') %}
+# Xdebug for PHP 7.0.0...7.1.0 
+RUN  pecl install xdebug-2.9.0 && docker-php-ext-enable xdebug.so
+{% endif %}
+
+{% if PHP_VERSION | version('7.1.0', '>=') %}
+# Xdebug for PHP >= 7.1.0 
+RUN pecl install xdebug && docker-php-ext-enable xdebug.so
+{% endif %}
+
+{% if PHP_VERSION | version('7.4.0', '<') %}
+# GD for PHP < 7.4.0
+RUN docker-php-ext-install recode
+RUN docker-php-ext-configure gd --with-freetype-dir=/usr/include/ --with-jpeg-dir=/usr/include/ && docker-php-ext-install gd
+{% endif %}
+
+{% if PHP_VERSION | version('7.3.99', '>') %}
+# GD for PHP > 7.3.99
+RUN docker-php-ext-configure gd --with-freetype=/usr/include/ --with-jpeg=/usr/include/ && docker-php-ext-install gd
+{% endif %}
+
 # Configure extension
-RUN docker-php-ext-configure zip \
-    && PHP_OPENSSL=yes docker-php-ext-configure imap --with-kerberos --with-imap-ssl
+RUN docker-php-ext-configure zip && PHP_OPENSSL=yes docker-php-ext-configure imap --with-kerberos --with-imap-ssl
 
+#Since the release of PHP5, system libs have changed location, shocker...
 RUN ln -s /usr/lib/x86_64-linux-gnu/libldap.so /usr/lib/libldap.so
+RUN ln -s /usr/include/x86_64-linux-gnu/gmp.h /usr/include/gmp.h 
 
+#Generic Pecl dependencies
 RUN docker-php-ext-install \
     bcmath bz2 calendar dba enchant exif gettext gmp imap intl ldap mysqli pcntl pdo_mysql \
     pdo_pgsql pgsql pspell shmop soap sockets sysvmsg sysvsem sysvshm tidy xmlrpc xsl zip
 
-ADD files/php_modules/install_modules.sh .
-RUN chmod +x ./install_modules.sh && ./install_modules.sh
 
+
+{% if PHP_VERSION | version('7', '<') %}
+# Pecl dependencies for PHP < 7 
+RUN pecl install libsodium-1.0.6 amqp apcu-4.0.11 memcached-2.2.0 mongodb-1.7.5 redis-2.2.8 mailparse-2.1.6 \
+    && docker-php-ext-enable amqp.so apcu.so memcached.so mongodb.so redis.so mailparse.so libsodium.so
+{% endif %}
+
+{% if PHP_VERSION | version('7', '>') %}
 # Oracle OCI8 Downloading
 RUN wget -O ./instantclient-basic.zip \
 https://continuousphp-infra.s3-us-west-1.amazonaws.com/oracle/php_runtime/instantclient-basic-linux.x64-19.3.0.0.0dbru.zip \
@@ -57,8 +94,9 @@ RUN ldconfig \
     && echo "instantclient,/usr/local/instantclient" | pecl install oci8 \
     && docker-php-ext-enable oci8.so
 
-# Using pecl for some extensions
+# Pecl dependencies for PHP > 7 
 RUN pecl install amqp apcu ast memcached mongodb redis mailparse \
     && docker-php-ext-enable amqp.so ast.so apcu.so memcached.so mongodb.so redis.so mailparse.so
+{% endif %}
 
 WORKDIR /home/cphp

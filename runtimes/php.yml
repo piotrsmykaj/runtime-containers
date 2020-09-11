@@ -10,6 +10,7 @@ versions:
   - 7.3.8-fpm
   - 7.4.2-fpm
   - 7.3.13-fpm
+  - 5.6.40-fpm
 components:
   - entrypoint
   - init_cphp

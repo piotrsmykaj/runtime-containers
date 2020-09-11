@@ -1,1 +1,1 @@
-RUN pip install  ansible
+RUN pip3 install  ansible

@@ -27,7 +27,6 @@ start_builder() {
       echo "EC2 Runtime Builder IP: $ip"
       break
     fi
-
     aws ec2 start-instances --instance-ids $AWS_RUNTIME_EC2_ID
     sleep 20
   done
@@ -50,23 +49,24 @@ run_copy_build_package() {
 run_build() {
   runtime=$1
   version=$2
-  exec_builder "cd /usr/local/runtime-containers/$CPHP_BUILD_ID; ./bin/docker-template build --runtime $runtime --version $version --verbose --replace" || return 1
+  exec_builder "cd /usr/local/runtime-containers/$CPHP_BUILD_ID ; ./bin/docker-template build --runtime $runtime --version $version --verbose --replace" || return 1
   return 0
 }
 
 run_test() {
   runtime=$1
   version=$2
-  exec_builder "cd /usr/local/runtime-containers/$CPHP_BUILD_ID && ./bin/docker-template test --runtime $runtime --version $version --verbose" || return 1
+  exec_builder "cd /usr/local/runtime-containers/$CPHP_BUILD_ID ; ./bin/docker-template test --runtime $runtime --version $version --verbose" || return 1
   return 0
 }
 
 run_deploy() {
   runtime=$1
   version=$2
-  exec_builder "docker tag continuous:php_$version 310957825501.dkr.ecr.us-east-1.amazonaws.com/cphp/runtime/php:$version"
+  echo $runtime:$version
+  exec_builder "docker tag continuous:php_$version 310957825501.dkr.ecr.us-east-1.amazonaws.com/cphp/runtime/$runtime:$version"
   exec_builder "aws ecr get-login --region us-east-1 --registry-ids 310957825501 --no-include-email | bash"
-  exec_builder "docker push 310957825501.dkr.ecr.us-east-1.amazonaws.com/cphp/runtime/php:$version"
+  exec_builder "docker push 310957825501.dkr.ecr.us-east-1.amazonaws.com/cphp/runtime/$runtime:$version"
 }
 
 action=$1
