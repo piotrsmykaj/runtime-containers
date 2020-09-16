@@ -73,6 +73,12 @@ RUN docker-php-ext-install \
 
 
 {% if PHP_VERSION | version('7', '<') %}
+
+# Create files and configuration sections according to expected paths for continuousd
+RUN touch /usr/local/etc/php-fpm.d/www.conf && \
+    echo "[www]" > /usr/local/etc/php-fpm.d/www.conf && \
+    touch /home/cphp/var/php-fpm.log
+
 # Pecl dependencies for PHP < 7 
 RUN pecl install libsodium-1.0.6 amqp apcu-4.0.11 memcached-2.2.0 mongodb-1.7.5 redis-2.2.8 mailparse-2.1.6 \
     && docker-php-ext-enable amqp.so apcu.so memcached.so mongodb.so redis.so mailparse.so libsodium.so

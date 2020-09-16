@@ -138,6 +138,9 @@ php_version=$(php -v | head -n 1 | awk '{print $2}')
       php -m | grep tokenizer
       php -m | grep xml
       php -m | grep mailparse
+      stat /usr/local/etc/php-fpm.d/www.conf
+      grep "[www]" /usr/local/etc/php-fpm.d/www.conf
+      stat /home/cphp/var/php-fpm.log
     else
       skip
     fi
