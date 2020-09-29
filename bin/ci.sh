@@ -66,12 +66,10 @@ run_activate_runtime() {
   space="  "
   file=docker-compose.yml
   echo "Activating runtime: $runtime on version: $version"
-  exec_builder "test -f docker-compose.yml"
-  if [[$?]]; then
-    command="echo -e version: \"3.8\"\n${space}${space}services:\n${space}${space}${space}${space}${runtime}-${version}\n${space}${space}${space}${space}${space}${space}image:310957825501.dkr.ecr.us-east-1.amazonaws.com/cphp/runtime/${runtime}:${version} >> docker-compose.yml"
-  else
-    command="echo -e ${space}${space}${space}${space}${space}${space}image:310957825501.dkr.ecr.us-east-1.amazonaws.com/cphp/runtime/${runtime}:${version} >> docker-compose.yml"
-  fi
+  
+  exec_builder "test -f docker-compose.yml" && \
+  command="echo -e version: \"3.8\"\n${space}${space}services:\n${space}${space}${space}${space}${runtime}-${version}\n${space}${space}${space}${space}${space}${space}image:310957825501.dkr.ecr.us-east-1.amazonaws.com/cphp/runtime/${runtime}:${version} >> docker-compose.yml" || \
+  command="echo -e ${space}${space}${space}${space}${space}${space}image:310957825501.dkr.ecr.us-east-1.amazonaws.com/cphp/runtime/${runtime}:${version} >> docker-compose.yml"
   exec_builder "$command" || return 1
   #aws --profile runtime-containers-builder s3 cp docker-compose.yml "$BUILT_RUNTIMES_S3/docker-compose.yml"
   return 0
