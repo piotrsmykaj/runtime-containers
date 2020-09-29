@@ -64,7 +64,7 @@ activate_runtime() {
   runtime=$1
   version=$2
   space="  "
-  echo "Activating version: $version and runtime: $runtime for build: $build"
+  echo "Activating runtime: $runtime on version: $version"
   if test -f docker-compose.yml; then
     echo 'version: "3.8"' > docker-compose.yml
     echo "${space}${space}services:" >> docker-compose.yml
