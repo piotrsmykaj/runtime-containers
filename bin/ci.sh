@@ -60,7 +60,7 @@ run_test() {
   return 0
 }
 
-activate_runtime() {
+run_activate_runtime() {
   runtime=$1
   version=$2
   space="  "
