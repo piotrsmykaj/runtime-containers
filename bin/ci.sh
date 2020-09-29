@@ -64,18 +64,19 @@ activate_runtime() {
   runtime=$1
   version=$2
   space="  "
+  file=docker-compose.yml
   echo "Activating runtime: $runtime on version: $version"
-  if test -f docker-compose.yml; then
+  if [[ -f $file ]]; then
     echo 'version: "3.8"' > docker-compose.yml
     echo "${space}${space}services:" >> docker-compose.yml
     echo "Appending runtime to docker-compose.yml..."
     echo "${space}${space}$runtime-$version:" >> docker-compose.yml
-    echo "${space}${space}${space}${space}image: $CPHP_REGISTRY_ADDRESS/$runtime:$version" >> docker-compose.yml
+    echo "${space}${space}${space}${space}image:310957825501.dkr.ecr.us-east-1.amazonaws.com/cphp/runtime/$runtime:$version" >> docker-compose.yml
   else
     echo "Creating docker-compose.yml..."
     echo "Appending runtime to docker-compose.yml..."
     echo "${space}${space}$runtime-$version:" >> docker-compose.yml
-    echo "${space}${space}${space}${space}image: $CPHP_REGISTRY_ADDRESS/$runtime:$version" >> docker-compose.yml  fi
+    echo "${space}${space}${space}${space}image: 310957825501.dkr.ecr.us-east-1.amazonaws.com/cphp/runtime/$runtime:$version" >> docker-compose.yml  fi
   fi
   cat docker-compose.yml
   #aws --profile runtime-containers-builder s3 cp docker-compose.yml "$BUILT_RUNTIMES_S3/docker-compose.yml"
@@ -89,7 +90,6 @@ run_deploy() {
   exec_builder "docker tag continuous:php_$version 310957825501.dkr.ecr.us-east-1.amazonaws.com/cphp/runtime/$runtime:$version"
   exec_builder "aws ecr get-login --region us-east-1 --registry-ids 310957825501 --no-include-email | bash"
   exec_builder "docker push 310957825501.dkr.ecr.us-east-1.amazonaws.com/cphp/runtime/$runtime:$version"
-  activate_runtime $runtime $version
 }
 
 action=$1
