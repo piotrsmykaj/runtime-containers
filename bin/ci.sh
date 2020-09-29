@@ -60,6 +60,29 @@ run_test() {
   return 0
 }
 
+activate_runtime() {
+  runtime=$1
+  version=$2
+  build=$3
+  space="  "
+  echo "Activating version: $version and runtime: $runtime for build: $build"
+  if test -f docker-compose.yml; then
+    echo 'version: "3.8"' > docker-compose.yml
+    echo "${space}${space}services:" >> docker-compose.yml
+    echo "Appending runtime to docker-compose.yml..."
+    echo "${space}${space}$runtime-$version:" >> docker-compose.yml
+    echo "${space}${space}${space}${space}image: $CPHP_REGISTRY_ADDRESS/$runtime:$version" >> docker-compose.yml
+  else
+    echo "Creating docker-compose.yml..."
+    echo "Appending runtime to docker-compose.yml..."
+    echo "${space}${space}$runtime-$version:" >> docker-compose.yml
+    echo "${space}${space}${space}${space}image: $CPHP_REGISTRY_ADDRESS/$runtime:$version" >> docker-compose.yml  fi
+  fi
+  cat docker-compose.yml
+  #aws --profile runtime-containers-builder s3 cp docker-compose.yml "$BUILT_RUNTIMES_S3/docker-compose.yml"
+  return 0
+}
+
 run_deploy() {
   runtime=$1
   version=$2
@@ -67,6 +90,7 @@ run_deploy() {
   exec_builder "docker tag continuous:php_$version 310957825501.dkr.ecr.us-east-1.amazonaws.com/cphp/runtime/$runtime:$version"
   exec_builder "aws ecr get-login --region us-east-1 --registry-ids 310957825501 --no-include-email | bash"
   exec_builder "docker push 310957825501.dkr.ecr.us-east-1.amazonaws.com/cphp/runtime/$runtime:$version"
+  activate_runtime $runtime $version $CPHP_BUILD_ID
 }
 
 action=$1
