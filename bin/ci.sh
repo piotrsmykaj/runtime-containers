@@ -66,8 +66,13 @@ run_activate_runtime() {
   space="  "
   file=docker-compose.yml
   echo "Activating runtime: $runtime on version: $version"
-  exec_builder "-f $file && echo version: \"3.8\" > docker-compose.yml; echo $space$spaceservices: >> docker-compose.yml; echo 'Appending runtime to docker-compose.yml...'; echo ${space}${space}$runtime-$version: >> docker-compose.yml ; echo ${space}${space}${space}${space}image:310957825501.dkr.ecr.us-east-1.amazonaws.com/cphp/runtime/$runtime:$version >> docker-compose.yml || echo ${space}${space}$runtime-$version: >> docker-compose.yml ; echo ${space}${space}${space}${space}image: 310957825501.dkr.ecr.us-east-1.amazonaws.com/cphp/runtime/$runtime:$version >> docker-compose.yml || return 1"
-  exec_builder 'cat docker-compose.yml'
+  exec_builder "-f docker-compose.yml"
+  if [[$?]]; then
+    command="echo -e version: \"3.8\"\n${space}${space}services:\n${space}${space}${space}${space}${runtime}-${version}\n${space}${space}${space}${space}${space}${space}image:310957825501.dkr.ecr.us-east-1.amazonaws.com/cphp/runtime/${runtime}:${version} >> docker-compose.yml"
+  else
+    command="echo -e ${space}${space}${space}${space}${space}${space}image:310957825501.dkr.ecr.us-east-1.amazonaws.com/cphp/runtime/${runtime}:${version} >> docker-compose.yml"
+  fi
+  exec_builder "$command" || return 1
   #aws --profile runtime-containers-builder s3 cp docker-compose.yml "$BUILT_RUNTIMES_S3/docker-compose.yml"
   return 0
 }
