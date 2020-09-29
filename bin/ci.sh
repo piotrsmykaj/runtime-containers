@@ -63,7 +63,6 @@ run_test() {
 activate_runtime() {
   runtime=$1
   version=$2
-  build=$3
   space="  "
   echo "Activating version: $version and runtime: $runtime for build: $build"
   if test -f docker-compose.yml; then
@@ -90,7 +89,7 @@ run_deploy() {
   exec_builder "docker tag continuous:php_$version 310957825501.dkr.ecr.us-east-1.amazonaws.com/cphp/runtime/$runtime:$version"
   exec_builder "aws ecr get-login --region us-east-1 --registry-ids 310957825501 --no-include-email | bash"
   exec_builder "docker push 310957825501.dkr.ecr.us-east-1.amazonaws.com/cphp/runtime/$runtime:$version"
-  activate_runtime $runtime $version $CPHP_BUILD_ID
+  activate_runtime $runtime $version
 }
 
 action=$1
