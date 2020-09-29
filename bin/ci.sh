@@ -115,6 +115,12 @@ then
   exit 0
 fi
 
+if [ "activate_runtime" == "$action" ];
+then
+  run_activate_runtime $runtime $version
+  exit 0
+fi
+
 if [ "copy_build_package" == "$action" ];
 then
   run_copy_build_package
